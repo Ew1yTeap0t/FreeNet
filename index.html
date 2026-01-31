@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>FreeNet v4.1 - Prime Edition</title>
+    <title>FreeNet v4.1 - Prime Edition (Saved)</title>
     <style id="user-styles"></style>
     <style>
         :root { --win-bg: #c0c0c0; --win-blue: #000080; }
@@ -41,7 +41,7 @@
 <canvas id="snow-canvas"></canvas>
 
 <div class="window">
-    <div class="title-bar"><span>FreeNet_Stable_v4.1.exe</span><span>[?] [X]</span></div>
+    <div class="title-bar"><span>FreeNet_Prime_Edition.exe</span><span>[?] [X]</span></div>
     
     <div class="tabs">
         <div class="tab active" onclick="switchTab('tab-chat')">Общий чат</div>
@@ -65,7 +65,7 @@
             <div class="widget">
                 <strong>Статистика:</strong>
                 <div>Сообщений: <span id="msg-count">0</span></div>
-                <div>Онлайн: <span id="online-count">1</span></div>
+                <div>Онлайн: <span id="online-count">1</span>+</div>
             </div>
 
             <div class="widget">
@@ -78,9 +78,11 @@
                 </div>
             </div>
 
-            <button onclick="applyDesign()" style="background:#ffcc00; color:#000;">ОБНОВИТЬ И СОХРАНИТЬ</button>
-            <input type="text" id="bg-url" placeholder="Фон URL">
-            <div id="status" style="color: orange; font-weight: bold;">• ПОИСК СЕТИ...</div>
+            <strong>Фон URL:</strong>
+            <input type="text" id="bg-url" placeholder="Вставь ссылку на фон">
+            <button onclick="applyDesign()" style="background:#ffcc00; color: #000; margin-top: 5px;">ОБНОВИТЬ И СОХРАНИТЬ</button>
+            
+            <div id="status" style="color: orange; font-weight: bold; margin-top: 5px;">• ПОИСК СЕТИ...</div>
             <div id="typing-status"></div>
         </div>
 
@@ -88,16 +90,21 @@
             <div id="tab-chat" class="page active">
                 <div id="messages"></div>
                 <div class="controls">
-                    <input type="text" id="msg-input" placeholder="Напиши что-нибудь..." style="flex-grow: 1;" onkeypress="handleTyping(event)">
+                    <input type="text" id="msg-input" placeholder="Напиши что-нибудь... (/w ник для привата)" style="flex-grow: 1;" onkeypress="handleTyping(event)">
                     <button onclick="sendMsg()">SEND</button>
                 </div>
             </div>
+
             <div id="tab-cinema" class="page">
-                <input type="text" id="v-url" placeholder="YouTube Link"><button onclick="loadVid()">OK</button>
-                <div id="video-container" style="height:350px; background:#000; margin-top:10px; display:flex; align-items:center; justify-content:center;">Экран</div>
+                <input type="text" id="v-url" placeholder="YouTube Link (https://...)"><button onclick="loadVid()">ЗАГРУЗИТЬ</button>
+                <div id="video-container" style="height:350px; background:#000; margin-top:10px; display:flex; align-items:center; justify-content:center; color:white;">Экран готов</div>
             </div>
+
             <div id="tab-paint" class="page">
-                <div class="controls"><input type="color" id="p-color"><button onclick="ctx.clearRect(0,0,900,600)">Clear</button></div>
+                <div class="controls">
+                    Цвет: <input type="color" id="p-color">
+                    <button onclick="ctx.clearRect(0,0,900,600)">ОЧИСТИТЬ ХОЛСТ</button>
+                </div>
                 <canvas id="paint-canvas"></canvas>
             </div>
         </div>
@@ -110,6 +117,28 @@
     let msgCounter = 0;
     let typingTimer;
 
+    // --- ФУНКЦИИ СОХРАНЕНИЯ (LOCAL STORAGE) ---
+    function saveProfile() {
+        const profile = {
+            nick: document.getElementById('nick').value,
+            ava: document.getElementById('ava-url').value,
+            bg: document.getElementById('bg-url').value
+        };
+        localStorage.setItem('freenet_profile', JSON.stringify(profile));
+    }
+
+    function loadProfile() {
+        const saved = localStorage.getItem('freenet_profile');
+        if (saved) {
+            const profile = JSON.parse(saved);
+            document.getElementById('nick').value = profile.nick || "User";
+            document.getElementById('ava-url').value = profile.ava || "";
+            document.getElementById('bg-url').value = profile.bg || "";
+            applyDesign(false); // Применяем без повторного сохранения
+        }
+    }
+
+    // --- ЧАСЫ МСК ---
     function updateClock() {
         const now = new Date();
         const msk = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (3 * 3600000));
@@ -117,32 +146,13 @@
     }
     setInterval(updateClock, 1000);
 
-    // --- СОХРАНЕНИЕ ДАННЫХ ---
-    function saveProfile() {
-        localStorage.setItem('freenet_nick', document.getElementById('nick').value);
-        localStorage.setItem('freenet_ava', document.getElementById('ava-url').value);
-        localStorage.setItem('freenet_bg', document.getElementById('bg-url').value);
-    }
-
-    function loadProfile() {
-        const nick = localStorage.getItem('freenet_nick');
-        const ava = localStorage.getItem('freenet_ava');
-        const bg = localStorage.getItem('freenet_bg');
-        if(nick) document.getElementById('nick').value = nick;
-        if(ava) { document.getElementById('ava-url').value = ava; document.getElementById('view-ava').src = ava; }
-        if(bg) { document.getElementById('bg-url').value = bg; document.body.style.backgroundImage = `url('${bg}')`; }
-    }
-
-    function applyDesign() {
-        const bg = document.getElementById('bg-url').value;
-        if(bg) document.body.style.backgroundImage = `url('${bg}')`;
-        saveProfile();
-    }
-
     // --- СЕТЬ ---
     function connect() {
         socket = new WebSocket(wsUrl);
-        socket.onopen = () => { document.getElementById('status').innerText = "• В СЕТИ"; document.getElementById('status').style.color = "green"; };
+        socket.onopen = () => {
+            document.getElementById('status').innerText = "• В СЕТИ";
+            document.getElementById('status').style.color = "green";
+        };
         socket.onmessage = (e) => {
             const data = JSON.parse(e.data);
             if(data.type === "typing") {
@@ -151,33 +161,40 @@
                     clearTimeout(typingTimer);
                     typingTimer = setTimeout(() => { document.getElementById('typing-status').innerText = ""; }, 2000);
                 }
-            } else { processMessage(data); }
+                return;
+            }
+            processMessage(data);
         };
-        socket.onclose = () => setTimeout(connect, 2000);
+        socket.onclose = () => { setTimeout(connect, 2000); };
     }
 
     function processMessage(data) {
         const myNick = document.getElementById('nick').value;
-        const box = document.getElementById('messages');
         if(data.msg.startsWith('/w ')) {
             const parts = data.msg.split(' ');
-            if(parts[1] !== myNick && data.nick !== myNick) return;
-            renderMsg(data, parts.slice(2).join(' '), true);
-        } else { renderMsg(data, data.msg, false); }
-        msgCounter++; document.getElementById('msg-count').innerText = msgCounter;
+            const target = parts[1];
+            const content = parts.slice(2).join(' ');
+            if(target !== myNick && data.nick !== myNick) return;
+            renderMsg(data, content, true);
+        } else {
+            renderMsg(data, data.msg, false);
+        }
+        msgCounter++;
+        document.getElementById('msg-count').innerText = msgCounter;
         playSoftBeep();
     }
 
     function renderMsg(data, text, isPrivate) {
         const box = document.getElementById('messages');
         const div = document.createElement('div');
-        if(isPrivate) div.className = "private-msg";
+        div.className = isPrivate ? "private-msg" : "";
         let content = text;
         const imgReg = /(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp))/i;
         if(imgReg.test(text)) content = text.replace(imgReg, '<img src="$1" class="msg-img">');
         const label = isPrivate ? `[Шепот от ${data.nick}]: ` : `<b>${data.nick}:</b> `;
-        div.innerHTML = `<img src="${data.ava}" width="16" height="16" style="vertical-align:middle"> ${label} ${content}`;
-        box.appendChild(div); box.scrollTop = box.scrollHeight;
+        div.innerHTML = `<img src="${data.ava}" width="16" height="16" style="vertical-align:middle; border:1px solid #000;"> ${label} ${content}`;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
     }
 
     function sendMsg() {
@@ -200,18 +217,30 @@
     function playSoftBeep() {
         try {
             const context = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = context.createOscillator(); const gain = context.createGain();
+            const osc = context.createOscillator();
+            const gain = context.createGain();
             osc.connect(gain); gain.connect(context.destination);
             osc.frequency.value = 600; gain.gain.value = 0.01;
             osc.start(); osc.stop(context.currentTime + 0.1);
         } catch(e) {}
     }
 
+    // --- ОФОРМЛЕНИЕ ---
+    function applyDesign(shouldSave = true) {
+        const bg = document.getElementById('bg-url').value;
+        if(bg) document.body.style.backgroundImage = `url('${bg}')`;
+        document.getElementById('view-ava').src = document.getElementById('ava-url').value || 'https://via.placeholder.com/150';
+        if(shouldSave) saveProfile();
+    }
+
     function switchTab(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        if(id === 'tab-paint') { const c = document.getElementById('paint-canvas'); c.width = c.parentElement.clientWidth - 20; c.height = 400; }
+        if(id === 'tab-paint') { 
+            const c = document.getElementById('paint-canvas');
+            c.width = c.parentElement.clientWidth - 20; c.height = 400;
+        }
     }
 
     function loadVid() {
@@ -220,6 +249,7 @@
         if(id) document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id[1]}" frameborder="0" allowfullscreen></iframe>`;
     }
 
+    // Paint
     const canvas = document.getElementById('paint-canvas');
     const ctx = canvas.getContext('2d');
     let drawing = false;
@@ -233,6 +263,7 @@
         ctx.stroke();
     };
 
+    // Снег
     const snow = document.getElementById('snow-canvas');
     const sctx = snow.getContext('2d');
     let flakes = [];
@@ -249,7 +280,13 @@
         requestAnimationFrame(loop);
     }
 
-    window.onload = () => { loadProfile(); connect(); loop(); };
+    // СТАРТ
+    window.onload = () => {
+        loadProfile(); // Загружаем старое оформление
+        connect(); 
+        loop();
+        updateClock();
+    };
 </script>
 </body>
 </html>
