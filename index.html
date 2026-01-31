@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>FreeNet v4.1 - Prime Edition (Saved)</title>
+    <title>FreeNet v4.2 - Prime Stable</title>
     <style id="user-styles"></style>
     <style>
         :root { --win-bg: #c0c0c0; --win-blue: #000080; }
@@ -41,7 +41,7 @@
 <canvas id="snow-canvas"></canvas>
 
 <div class="window">
-    <div class="title-bar"><span>FreeNet_Prime_Edition.exe</span><span>[?] [X]</span></div>
+    <div class="title-bar"><span>FreeNet_Stable_v42.exe</span><span>[?] [X]</span></div>
     
     <div class="tabs">
         <div class="tab active" onclick="switchTab('tab-chat')">Общий чат</div>
@@ -58,9 +58,9 @@
 
             <img id="view-ava" src="https://via.placeholder.com/150" style="width:100%; border:2px inset #fff; background: #fff;">
             <strong>Ник:</strong>
-            <input type="text" id="nick" value="User">
+            <input type="text" id="nick" value="User" onchange="saveProfile()">
             <strong>Аватар (URL):</strong>
-            <input type="text" id="ava-url" oninput="document.getElementById('view-ava').src=this.value">
+            <input type="text" id="ava-url" oninput="updateAvaPreview()" onchange="saveProfile()">
             
             <div class="widget">
                 <strong>Статистика:</strong>
@@ -69,18 +69,18 @@
             </div>
 
             <div class="widget">
-                <strong>Lo-Fi Радио:</strong>
-                <audio id="radio" src="https://stream.zeno.fm/0r0xa792kwzuv" preload="none"></audio>
+                <strong>Lo-Fi Радио (Live):</strong>
+                <audio id="radio" src="https://icecast.walmradio.com:8000/lofi" preload="none"></audio>
                 <div style="display:flex; gap:5px; margin-top:5px;">
                     <button onclick="document.getElementById('radio').play()">▶</button>
                     <button onclick="document.getElementById('radio').pause()">⏸</button>
-                    <input type="range" min="0" max="1" step="0.1" oninput="document.getElementById('radio').volume=this.value">
+                    <input type="range" min="0" max="1" step="0.1" value="0.5" oninput="document.getElementById('radio').volume=this.value">
                 </div>
             </div>
 
             <strong>Фон URL:</strong>
-            <input type="text" id="bg-url" placeholder="Вставь ссылку на фон">
-            <button onclick="applyDesign()" style="background:#ffcc00; color: #000; margin-top: 5px;">ОБНОВИТЬ И СОХРАНИТЬ</button>
+            <input type="text" id="bg-url" placeholder="Вставь ссылку" onchange="applyDesign(); saveProfile();">
+            <button onclick="applyDesign(); saveProfile();" style="background:#ffcc00; color: #000; margin-top: 5px;">ПРИМЕНИТЬ И СОХРАНИТЬ</button>
             
             <div id="status" style="color: orange; font-weight: bold; margin-top: 5px;">• ПОИСК СЕТИ...</div>
             <div id="typing-status"></div>
@@ -90,20 +90,20 @@
             <div id="tab-chat" class="page active">
                 <div id="messages"></div>
                 <div class="controls">
-                    <input type="text" id="msg-input" placeholder="Напиши что-нибудь... (/w ник для привата)" style="flex-grow: 1;" onkeypress="handleTyping(event)">
+                    <input type="text" id="msg-input" placeholder="Напиши что-нибудь..." style="flex-grow: 1;" onkeypress="handleTyping(event)">
                     <button onclick="sendMsg()">SEND</button>
                 </div>
             </div>
 
             <div id="tab-cinema" class="page">
-                <input type="text" id="v-url" placeholder="YouTube Link (https://...)"><button onclick="loadVid()">ЗАГРУЗИТЬ</button>
+                <input type="text" id="v-url" placeholder="YouTube Link"><button onclick="loadVid()">ЗАГРУЗИТЬ</button>
                 <div id="video-container" style="height:350px; background:#000; margin-top:10px; display:flex; align-items:center; justify-content:center; color:white;">Экран готов</div>
             </div>
 
             <div id="tab-paint" class="page">
                 <div class="controls">
                     Цвет: <input type="color" id="p-color">
-                    <button onclick="ctx.clearRect(0,0,900,600)">ОЧИСТИТЬ ХОЛСТ</button>
+                    <button onclick="ctx.clearRect(0,0,900,600)">ОЧИСТИТЬ</button>
                 </div>
                 <canvas id="paint-canvas"></canvas>
             </div>
@@ -117,28 +117,29 @@
     let msgCounter = 0;
     let typingTimer;
 
-    // --- ФУНКЦИИ СОХРАНЕНИЯ (LOCAL STORAGE) ---
+    // --- ИСПРАВЛЕННОЕ СОХРАНЕНИЕ ---
     function saveProfile() {
         const profile = {
             nick: document.getElementById('nick').value,
             ava: document.getElementById('ava-url').value,
             bg: document.getElementById('bg-url').value
         };
-        localStorage.setItem('freenet_profile', JSON.stringify(profile));
+        localStorage.setItem('freenet_v4_data', JSON.stringify(profile));
+        console.log("Данные сохранены!");
     }
 
     function loadProfile() {
-        const saved = localStorage.getItem('freenet_profile');
+        const saved = localStorage.getItem('freenet_v4_data');
         if (saved) {
-            const profile = JSON.parse(saved);
-            document.getElementById('nick').value = profile.nick || "User";
-            document.getElementById('ava-url').value = profile.ava || "";
-            document.getElementById('bg-url').value = profile.bg || "";
-            applyDesign(false); // Применяем без повторного сохранения
+            const p = JSON.parse(saved);
+            if(p.nick) document.getElementById('nick').value = p.nick;
+            if(p.ava) document.getElementById('ava-url').value = p.ava;
+            if(p.bg) document.getElementById('bg-url').value = p.bg;
+            applyDesign(false);
         }
     }
 
-    // --- ЧАСЫ МСК ---
+    // --- ЧАСЫ ---
     function updateClock() {
         const now = new Date();
         const msk = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (3 * 3600000));
@@ -170,13 +171,12 @@
 
     function processMessage(data) {
         const myNick = document.getElementById('nick').value;
-        if(data.msg.startsWith('/w ')) {
+        if(data.msg && data.msg.startsWith('/w ')) {
             const parts = data.msg.split(' ');
             const target = parts[1];
-            const content = parts.slice(2).join(' ');
             if(target !== myNick && data.nick !== myNick) return;
-            renderMsg(data, content, true);
-        } else {
+            renderMsg(data, parts.slice(2).join(' '), true);
+        } else if (data.msg) {
             renderMsg(data, data.msg, false);
         }
         msgCounter++;
@@ -225,12 +225,17 @@
         } catch(e) {}
     }
 
-    // --- ОФОРМЛЕНИЕ ---
-    function applyDesign(shouldSave = true) {
+    // --- ИНТЕРФЕЙС ---
+    function updateAvaPreview() {
+        const url = document.getElementById('ava-url').value || 'https://via.placeholder.com/150';
+        document.getElementById('view-ava').src = url;
+    }
+
+    function applyDesign(save = true) {
         const bg = document.getElementById('bg-url').value;
         if(bg) document.body.style.backgroundImage = `url('${bg}')`;
-        document.getElementById('view-ava').src = document.getElementById('ava-url').value || 'https://via.placeholder.com/150';
-        if(shouldSave) saveProfile();
+        updateAvaPreview();
+        if(save) saveProfile();
     }
 
     function switchTab(id) {
@@ -269,7 +274,7 @@
     let flakes = [];
     function resize() { snow.width = window.innerWidth; snow.height = window.innerHeight; }
     window.onresize = resize; resize();
-    for(let i=0; i<70; i++) flakes.push({x: Math.random()*2000, y: Math.random()*1000, r: Math.random()*2+1});
+    for(let i=0; i<70; i++) flakes.push({x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight, r: Math.random()*2+1});
     function loop() {
         sctx.clearRect(0,0,snow.width,snow.height);
         sctx.fillStyle = "rgba(255,255,255,0.8)";
@@ -280,13 +285,13 @@
         requestAnimationFrame(loop);
     }
 
-    // СТАРТ
-    window.onload = () => {
-        loadProfile(); // Загружаем старое оформление
-        connect(); 
+    // ЗАПУСК
+    document.addEventListener('DOMContentLoaded', () => {
+        loadProfile();
+        connect();
         loop();
         updateClock();
-    };
+    });
 </script>
 </body>
 </html>
