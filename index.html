@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>FreeNet v4.3 - Pro Edition</title>
+    <title>FreeNet v5.0 - Ultimate Edition</title>
     <style id="user-styles"></style>
     <style>
         :root { --win-bg: #c0c0c0; --win-blue: #000080; }
@@ -23,7 +23,7 @@
         .page { display: none; flex-direction: column; height: 100%; padding: 10px; box-sizing: border-box; }
         .page.active { display: flex; }
 
-        #messages { flex-grow: 1; overflow-y: auto; border: 1px inset #ccc; padding: 10px; font-size: 13px; background: #fff; line-height: 1.4; }
+        #messages, #board-messages { flex-grow: 1; overflow-y: auto; border: 1px inset #ccc; padding: 10px; font-size: 13px; background: #fff; line-height: 1.4; }
         .msg-img { max-width: 200px; display: block; border: 2px solid #fff; margin-top: 5px; }
         .private-msg { color: #800080; font-style: italic; background: #ffe6ff; padding: 2px; }
 
@@ -34,10 +34,9 @@
         .widget { border: 1px solid #888; background: #ddd; padding: 5px; margin-top: 5px; }
         #clock { font-family: 'Courier New', monospace; font-weight: bold; font-size: 16px; color: #000; text-align: center; }
         #typing-status { font-style: italic; color: #555; height: 15px; font-size: 10px; }
-
-        /* Board Style */
-        .board-item { background: #fff8dc; border: 1px solid #daa520; padding: 8px; margin-bottom: 10px; position: relative; box-shadow: 2px 2px 0 #888; }
-        .del-btn { position: absolute; top: 2px; right: 2px; cursor: pointer; color: red; font-weight: bold; font-size: 10px; }
+        
+        .board-item { border-bottom: 1px dashed #888; padding: 5px 0; position: relative; }
+        .del-btn { color: red; cursor: pointer; font-weight: bold; float: right; margin-left: 10px; }
     </style>
 </head>
 <body>
@@ -45,11 +44,11 @@
 <canvas id="snow-canvas"></canvas>
 
 <div class="window">
-    <div class="title-bar"><span>FreeNet_Markdown_Board.exe</span><span>[?] [X]</span></div>
+    <div class="title-bar"><span>FreeNet_Ultimate_v5.exe</span><span>[?] [X]</span></div>
     
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('tab-chat')">Чат</div>
-        <div class="tab" onclick="switchTab('tab-board')">Доска объявлений</div>
+        <div class="tab active" onclick="switchTab('tab-chat')">Общий чат</div>
+        <div class="tab" onclick="switchTab('tab-board')">Доска</div>
         <div class="tab" onclick="switchTab('tab-cinema')">Кинозал</div>
         <div class="tab" onclick="switchTab('tab-paint')">Граффити</div>
     </div>
@@ -63,25 +62,26 @@
 
             <img id="view-ava" src="https://via.placeholder.com/150" style="width:100%; border:2px inset #fff; background: #fff;">
             
-            <strong>Ник и цвет:</strong>
+            <strong>Ник и Цвет:</strong>
             <div style="display:flex; gap:2px;">
-                <input type="text" id="nick" value="User" onchange="saveProfile()">
-                <input type="color" id="nick-color" value="#000000" onchange="saveProfile()" title="Цвет ника">
+                <input type="text" id="nick" value="User" style="flex-grow:1" onchange="saveProfile()">
+                <input type="color" id="nick-color" value="#000000" title="Цвет ника" onchange="saveProfile()">
             </div>
-
+            
             <strong>Аватар (URL):</strong>
             <input type="text" id="ava-url" oninput="updateAvaPreview()" onchange="saveProfile()">
             
             <div class="widget">
-                <strong>Инфо:</strong>
-                <div>Постов: <span id="msg-count">0</span></div>
-                <div>Сеть: <span id="status" style="color:orange">...</span></div>
+                <strong>Статистика:</strong>
+                <div>Сообщений: <span id="msg-count">0</span></div>
+                <div>Онлайн: <span id="online-count">1</span>+</div>
             </div>
 
             <strong>Фон URL:</strong>
             <input type="text" id="bg-url" placeholder="Вставь ссылку" onchange="applyDesign(); saveProfile();">
-            <button onclick="applyDesign(); saveProfile();" style="background:#ffcc00; color: #000; margin-top: 5px;">СОХРАНИТЬ ВИД</button>
+            <button onclick="applyDesign(); saveProfile();" style="background:#ffcc00; color: #000; margin-top: 5px;">ОБНОВИТЬ И СОХРАНИТЬ</button>
             
+            <div id="status" style="color: orange; font-weight: bold; margin-top: 5px;">• ПОИСК СЕТИ...</div>
             <div id="typing-status"></div>
         </div>
 
@@ -89,28 +89,28 @@
             <div id="tab-chat" class="page active">
                 <div id="messages"></div>
                 <div class="controls">
-                    <input type="text" id="msg-input" placeholder="**болд** *курсив* ~~дел~~" style="flex-grow: 1;" onkeypress="handleTyping(event)">
+                    <input type="text" id="msg-input" placeholder="Напиши что-нибудь..." style="flex-grow: 1;" onkeypress="handleTyping(event)">
                     <button onclick="sendMsg()">SEND</button>
                 </div>
             </div>
 
             <div id="tab-board" class="page">
-                <div class="controls" style="flex-direction:column; background:#eee; padding:10px; border-bottom:1px solid #888;">
-                    <textarea id="board-input" placeholder="Текст объявления..." rows="2"></textarea>
-                    <button onclick="addBoardItem()" style="margin-top:5px; width:100%">ОПУБЛИКОВАТЬ</button>
+                <div id="board-messages"></div>
+                <div class="controls">
+                    <input type="text" id="board-input" placeholder="Объявление на доску..." style="flex-grow: 1;">
+                    <button onclick="sendBoard()">POST</button>
                 </div>
-                <div id="board-list" style="flex-grow:1; overflow-y:auto; padding:10px;"></div>
             </div>
 
             <div id="tab-cinema" class="page">
-                <input type="text" id="v-url" placeholder="YouTube Link"><button onclick="loadVid()">OK</button>
-                <div id="video-container" style="height:350px; background:#000; margin-top:10px; display:flex; align-items:center; justify-content:center; color:white;">Экран</div>
+                <input type="text" id="v-url" placeholder="YouTube Link"><button onclick="loadVid()">ЗАГРУЗИТЬ</button>
+                <div id="video-container" style="height:350px; background:#000; margin-top:10px; display:flex; align-items:center; justify-content:center; color:white;">Экран готов</div>
             </div>
 
             <div id="tab-paint" class="page">
                 <div class="controls">
-                    <input type="color" id="p-color">
-                    <button onclick="ctx.clearRect(0,0,900,600)">CLEAR</button>
+                    Цвет: <input type="color" id="p-color">
+                    <button onclick="ctx.clearRect(0,0,900,600)">ОЧИСТИТЬ</button>
                 </div>
                 <canvas id="paint-canvas"></canvas>
             </div>
@@ -124,44 +124,15 @@
     let msgCounter = 0;
     let typingTimer;
 
-    // --- ФОРМАТИРОВАНИЕ MARKDOWN ---
-    function parseMarkdown(text) {
+    // --- ФУНКЦИИ ФОРМАТИРОВАНИЯ ---
+    function formatText(text) {
         return text
             .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
             .replace(/\*(.*?)\*/g, '<i>$1</i>')
             .replace(/~~(.*?)~~/g, '<strike>$1</strike>');
     }
 
-    // --- ДОСКА ОБЪЯВЛЕНИЙ (LOCAL) ---
-    function addBoardItem() {
-        const input = document.getElementById('board-input');
-        if(!input.value.trim()) return;
-        const items = JSON.parse(localStorage.getItem('freenet_board') || '[]');
-        items.unshift({ id: Date.now(), text: input.value, nick: document.getElementById('nick').value });
-        localStorage.setItem('freenet_board', JSON.stringify(items));
-        input.value = "";
-        renderBoard();
-    }
-
-    function renderBoard() {
-        const list = document.getElementById('board-list');
-        const items = JSON.parse(localStorage.getItem('freenet_board') || '[]');
-        list.innerHTML = items.map(i => `
-            <div class="board-item">
-                <span class="del-btn" onclick="deleteBoardItem(${i.id})">[X]</span>
-                <small><b>${i.nick}:</b></small><br>${parseMarkdown(i.text)}
-            </div>
-        `).join('');
-    }
-
-    function deleteBoardItem(id) {
-        let items = JSON.parse(localStorage.getItem('freenet_board') || '[]');
-        items = items.filter(i => i.id !== id);
-        localStorage.setItem('freenet_board', JSON.stringify(items));
-        renderBoard();
-    }
-
-    // --- ПРОФИЛЬ ---
+    // --- СОХРАНЕНИЕ ---
     function saveProfile() {
         const profile = {
             nick: document.getElementById('nick').value,
@@ -169,24 +140,24 @@
             ava: document.getElementById('ava-url').value,
             bg: document.getElementById('bg-url').value
         };
-        localStorage.setItem('freenet_v4_pro', JSON.stringify(profile));
+        localStorage.setItem('freenet_v5_data', JSON.stringify(profile));
     }
 
     function loadProfile() {
-        const saved = localStorage.getItem('freenet_v4_pro');
+        const saved = localStorage.getItem('freenet_v5_data');
         if (saved) {
             const p = JSON.parse(saved);
-            document.getElementById('nick').value = p.nick || "User";
-            document.getElementById('nick-color').value = p.color || "#000000";
-            document.getElementById('ava-url').value = p.ava || "";
-            document.getElementById('bg-url').value = p.bg || "";
+            if(p.nick) document.getElementById('nick').value = p.nick;
+            if(p.color) document.getElementById('nick-color').value = p.color;
+            if(p.ava) document.getElementById('ava-url').value = p.ava;
+            if(p.bg) document.getElementById('bg-url').value = p.bg;
             applyDesign(false);
         }
     }
 
-    // --- ЧАСЫ ---
     function updateClock() {
-        const msk = new Date(new Date().getTime() + (new Date().getTimezoneOffset() * 60000) + (3 * 3600000));
+        const now = new Date();
+        const msk = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (3 * 3600000));
         document.getElementById('clock').innerText = msk.toTimeString().split(' ')[0];
     }
     setInterval(updateClock, 1000);
@@ -194,7 +165,10 @@
     // --- СЕТЬ ---
     function connect() {
         socket = new WebSocket(wsUrl);
-        socket.onopen = () => { document.getElementById('status').innerText = "ONLINE"; document.getElementById('status').style.color = "green"; };
+        socket.onopen = () => {
+            document.getElementById('status').innerText = "• В СЕТИ";
+            document.getElementById('status').style.color = "green";
+        };
         socket.onmessage = (e) => {
             const data = JSON.parse(e.data);
             if(data.type === "typing") {
@@ -205,6 +179,8 @@
                 }
                 return;
             }
+            if(data.type === "board") { renderBoard(data); return; }
+            if(data.type === "del_board") { document.getElementById(data.id)?.remove(); return; }
             processMessage(data);
         };
         socket.onclose = () => { setTimeout(connect, 2000); };
@@ -212,30 +188,29 @@
 
     function processMessage(data) {
         const myNick = document.getElementById('nick').value;
+        if(data.msg && data.msg.startsWith('/w ')) {
+            const parts = data.msg.split(' ');
+            if(parts[1] !== myNick && data.nick !== myNick) return;
+            renderMsg(data, parts.slice(2).join(' '), true);
+        } else if (data.msg) {
+            renderMsg(data, data.msg, false);
+        }
+        msgCounter++;
+        document.getElementById('msg-count').innerText = msgCounter;
+        playSoftBeep();
+    }
+
+    function renderMsg(data, text, isPrivate) {
         const box = document.getElementById('messages');
         const div = document.createElement('div');
-        
-        let text = data.msg || "";
-        let isPrivate = false;
-        if(text.startsWith('/w ')) {
-            const parts = text.split(' ');
-            if(parts[1] !== myNick && data.nick !== myNick) return;
-            text = parts.slice(2).join(' ');
-            isPrivate = true;
-            div.className = "private-msg";
-        }
-
-        let content = parseMarkdown(text);
+        div.className = isPrivate ? "private-msg" : "";
+        let content = formatText(text);
         const imgReg = /(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp))/i;
         if(imgReg.test(text)) content = content.replace(imgReg, '<img src="$1" class="msg-img">');
-
-        const nickStyle = `style="color:${data.nColor || '#000'}; font-weight:bold"`;
-        const label = isPrivate ? `[Шепот от <span ${nickStyle}>${data.nick}</span>]: ` : `<span ${nickStyle}>${data.nick}:</span> `;
-        
-        div.innerHTML = `<img src="${data.ava}" width="16" height="16" style="vertical-align:middle"> ${label} ${content}`;
+        const label = isPrivate ? `[Шепот от ${data.nick}]: ` : `<b style="color:${data.color || '#000'}">${data.nick}:</b> `;
+        div.innerHTML = `<img src="${data.ava}" width="16" height="16" style="vertical-align:middle; border:1px solid #000;"> ${label} ${content}`;
         box.appendChild(div);
         box.scrollTop = box.scrollHeight;
-        msgCounter++; document.getElementById('msg-count').innerText = msgCounter;
     }
 
     function sendMsg() {
@@ -243,7 +218,7 @@
         if (socket.readyState === 1 && inp.value.trim()) {
             socket.send(JSON.stringify({
                 nick: document.getElementById('nick').value,
-                nColor: document.getElementById('nick-color').value,
+                color: document.getElementById('nick-color').value,
                 msg: inp.value,
                 ava: document.getElementById('ava-url').value || 'https://via.placeholder.com/16'
             }));
@@ -251,43 +226,95 @@
         }
     }
 
+    // --- ДОСКА ОБЪЯВЛЕНИЙ ---
+    function sendBoard() {
+        const inp = document.getElementById('board-input');
+        if (socket.readyState === 1 && inp.value.trim()) {
+            socket.send(JSON.stringify({
+                type: "board",
+                id: "b" + Date.now(),
+                nick: document.getElementById('nick').value,
+                msg: inp.value,
+                ava: document.getElementById('ava-url').value || 'https://via.placeholder.com/16'
+            }));
+            inp.value = "";
+        }
+    }
+
+    function renderBoard(data) {
+        const box = document.getElementById('board-messages');
+        if(document.getElementById(data.id)) return;
+        const div = document.createElement('div');
+        div.className = "board-item";
+        div.id = data.id;
+        div.innerHTML = `<span class="del-btn" onclick="deleteBoard('${data.id}')">[X]</span>
+                         <img src="${data.ava}" width="14"> <b>${data.nick}:</b> ${formatText(data.msg)}`;
+        box.prepend(div);
+    }
+
+    function deleteBoard(id) {
+        if(socket.readyState === 1) socket.send(JSON.stringify({ type: "del_board", id: id }));
+    }
+
     function handleTyping(e) {
-        if(e.key === 'Enter') sendMsg();
-        else if(socket.readyState === 1) socket.send(JSON.stringify({ type: "typing", nick: document.getElementById('nick').value }));
+        if(e.key === 'Enter') { sendMsg(); return; }
+        if(socket.readyState === 1) socket.send(JSON.stringify({ type: "typing", nick: document.getElementById('nick').value }));
+    }
+
+    function playSoftBeep() {
+        try {
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = context.createOscillator();
+            const gain = context.createGain();
+            osc.connect(gain); gain.connect(context.destination);
+            osc.frequency.value = 600; gain.gain.value = 0.01;
+            osc.start(); osc.stop(context.currentTime + 0.1);
+        } catch(e) {}
     }
 
     // --- ИНТЕРФЕЙС ---
-    function updateAvaPreview() { document.getElementById('view-ava').src = document.getElementById('ava-url').value || 'https://via.placeholder.com/150'; }
+    function updateAvaPreview() {
+        document.getElementById('view-ava').src = document.getElementById('ava-url').value || 'https://via.placeholder.com/150';
+    }
+
     function applyDesign(save = true) {
         const bg = document.getElementById('bg-url').value;
         if(bg) document.body.style.backgroundImage = `url('${bg}')`;
         updateAvaPreview();
         if(save) saveProfile();
     }
+
     function switchTab(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        if(id === 'tab-paint') { const c = document.getElementById('paint-canvas'); c.width = c.parentElement.clientWidth - 20; c.height = 400; }
+        if(id === 'tab-paint') { 
+            const c = document.getElementById('paint-canvas');
+            c.width = c.parentElement.clientWidth - 20; c.height = 400;
+        }
     }
+
     function loadVid() {
-        const id = document.getElementById('v-url').value.match(/(?:v=|be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+        const url = document.getElementById('v-url').value;
+        const id = url.match(/(?:v=|be\/|embed\/)([a-zA-Z0-9_-]{11})/);
         if(id) document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id[1]}" frameborder="0" allowfullscreen></iframe>`;
     }
 
+    // Paint
     const canvas = document.getElementById('paint-canvas');
     const ctx = canvas.getContext('2d');
-    let draw = false;
-    canvas.onmousedown = () => draw = true;
-    window.onmouseup = () => { draw = false; ctx.beginPath(); };
+    let drawing = false;
+    canvas.onmousedown = () => drawing = true;
+    window.onmouseup = () => { drawing = false; ctx.beginPath(); };
     canvas.onmousemove = (e) => {
-        if(!draw) return;
+        if(!drawing) return;
         const r = canvas.getBoundingClientRect();
         ctx.strokeStyle = document.getElementById('p-color').value;
         ctx.lineWidth = 3; ctx.lineTo(e.clientX - r.left, e.clientY - r.top);
         ctx.stroke();
     };
 
+    // Снег
     const snow = document.getElementById('snow-canvas');
     const sctx = snow.getContext('2d');
     let flakes = [];
@@ -295,14 +322,17 @@
     window.onresize = resize; resize();
     for(let i=0; i<70; i++) flakes.push({x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight, r: Math.random()*2+1});
     function loop() {
-        sctx.clearRect(0,0,snow.width,snow.height); sctx.fillStyle = "rgba(255,255,255,0.8)";
-        flakes.forEach(f => { sctx.beginPath(); sctx.arc(f.x, f.y, f.r, 0, Math.PI*2); sctx.fill(); f.y += 1; if(f.y > snow.height) f.y = -5; });
+        sctx.clearRect(0,0,snow.width,snow.height);
+        sctx.fillStyle = "rgba(255,255,255,0.8)";
+        flakes.forEach(f => {
+            sctx.beginPath(); sctx.arc(f.x, f.y, f.r, 0, Math.PI*2); sctx.fill();
+            f.y += 1; if(f.y > snow.height) f.y = -5;
+        });
         requestAnimationFrame(loop);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
         loadProfile();
-        renderBoard();
         connect();
         loop();
         updateClock();
