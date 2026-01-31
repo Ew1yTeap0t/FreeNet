@@ -2,131 +2,92 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>FreeNet - Global Hub (GitHub Edition)</title>
-    <script src="https://cdn.jsdelivr.net/npm/piesocket-js@2.0.6/dist/piesocket.js"></script>
-    <style id="user-styles"></style>
+    <title>FreeNet - Direct Connection</title>
     <style>
         :root { --win-bg: #c0c0c0; --win-blue: #000080; }
         body { background: #008080; font-family: 'Tahoma', sans-serif; margin: 0; padding: 20px; }
-        .window { width: 900px; background: var(--win-bg); border: 2px solid #fff; border-right: 2px solid #000; border-bottom: 2px solid #000; margin: 0 auto; box-shadow: 4px 4px 10px rgba(0,0,0,0.5); }
-        .title-bar { background: linear-gradient(90deg, var(--win-blue), #1084d0); color: white; padding: 4px 8px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        .tabs { display: flex; background: var(--win-bg); padding: 5px 5px 0 5px; gap: 3px; border-bottom: 2px solid #888; }
-        .tab { padding: 6px 15px; border: 1px solid #000; border-bottom: none; cursor: pointer; background: #999; font-size: 11px; font-weight: bold; color: #fff; }
-        .tab.active { background: #eee; color: #000; position: relative; top: 1px; border-bottom: 1px solid #eee; }
-        .main-layout { display: flex; gap: 10px; padding: 10px; height: 580px; }
-        .sidebar { width: 230px; background: #eee; border: 2px inset #fff; padding: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 8px; }
-        .viewport { flex-grow: 1; background: #fff; border: 2px inset #fff; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .page { display: none; flex-direction: column; height: 100%; padding: 10px; box-sizing: border-box; }
-        .page.active { display: flex; }
-        #messages { flex-grow: 1; overflow-y: auto; padding: 10px; background: white; border: 1px inset #ccc; font-size: 13px; margin-bottom: 5px; }
-        .controls { padding: 5px 0; display: flex; gap: 5px; }
-        input, textarea { border: 2px inset #fff; padding: 4px; font-family: 'Tahoma'; }
-        button { background: var(--win-bg); border: 2px outset #fff; cursor: pointer; font-weight: bold; padding: 4px 10px; }
-        button:active { border: 2px inset #fff; }
-        .mines-grid { display: grid; grid-template-columns: repeat(10, 26px); gap: 1px; background: #888; border: 2px solid #333; margin: 0 auto; }
-        .cell { width: 26px; height: 26px; background: #ccc; border: 2px outset #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; font-weight: bold; }
-        .cell.open { border: 1px solid #999; background: #ddd; }
-        #paint-canvas { border: 1px solid #000; background: white; flex-grow: 1; touch-action: none; cursor: crosshair; }
+        .window { width: 800px; background: var(--win-bg); border: 2px solid #fff; border-right: 2px solid #000; border-bottom: 2px solid #000; margin: 0 auto; box-shadow: 4px 4px 10px rgba(0,0,0,0.5); }
+        .title-bar { background: linear-gradient(90deg, var(--win-blue), #1084d0); color: white; padding: 4px 8px; font-weight: bold; display: flex; justify-content: space-between; }
+        .main-layout { display: flex; gap: 10px; padding: 10px; height: 500px; }
+        .sidebar { width: 200px; background: #eee; border: 2px inset #fff; padding: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .viewport { flex-grow: 1; background: #fff; border: 2px inset #fff; display: flex; flex-direction: column; padding: 10px; }
+        #messages { flex-grow: 1; overflow-y: auto; border: 1px inset #ccc; background: white; padding: 10px; font-size: 13px; margin-bottom: 10px; }
+        .controls { display: flex; gap: 5px; }
+        input { border: 2px inset #fff; padding: 4px; }
+        button { background: var(--win-bg); border: 2px outset #fff; cursor: pointer; padding: 4px 10px; font-weight: bold; }
+        #status { font-weight: bold; font-size: 11px; }
     </style>
 </head>
 <body>
 
 <div class="window">
-    <div class="title-bar"><span>FreeNet_Ultimate_Fix.exe</span><span>[?] [X]</span></div>
-    <div class="tabs">
-        <div class="tab active" onclick="switchTab('tab-chat')">Чат</div>
-        <div class="tab" onclick="switchTab('tab-cinema')">Кино</div>
-        <div class="tab" onclick="switchTab('tab-paint')">Paint</div>
-        <div class="tab" onclick="switchTab('tab-games')">Сапёр</div>
-    </div>
+    <div class="title-bar"><span>FreeNet_Direct_v2.exe</span><span>[X]</span></div>
     <div class="main-layout">
         <div class="sidebar">
-            <img id="view-ava" src="https://via.placeholder.com/150" style="width:100%; border:2px inset #fff; margin-bottom:5px;">
             <strong>Профиль:</strong>
-            <input type="text" id="nick" placeholder="Ник">
-            <input type="text" id="ava-url" placeholder="URL аватарки">
-            <hr>
-            <button onclick="applyDesign()" style="background:#ffcc00; color:#000;">ОБНОВИТЬ</button>
-            <div id="status" style="font-size:10px; color:orange; margin-top:5px; font-weight: bold;">• ПОИСК СЕТИ...</div>
+            <input type="text" id="nick" placeholder="Ник" value="User">
+            <input type="text" id="ava-url" placeholder="Ава URL" value="https://via.placeholder.com/20">
+            <hr style="width: 100%">
+            <div id="status" style="color: orange;">• ПОДКЛЮЧЕНИЕ...</div>
+            <div style="font-size: 10px; color: #666;">Система: WebSocket Native</div>
         </div>
         <div class="viewport">
-            <div id="tab-chat" class="page active">
-                <div id="messages"></div>
-                <div class="controls">
-                    <input type="text" id="msg-input" style="flex-grow:1" onkeypress="if(event.key==='Enter') sendMsg()">
-                    <button onclick="sendMsg()">ОТПРАВИТЬ</button>
-                </div>
+            <div id="messages"></div>
+            <div class="controls">
+                <input type="text" id="msg-input" style="flex-grow: 1;" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMsg()">
+                <button onclick="sendMsg()">ОТПРАВИТЬ</button>
             </div>
-            <div id="tab-cinema" class="page">
-                <input type="text" id="v-url" placeholder="YouTube URL"><button onclick="loadVideo()">OK</button>
-                <div id="video-container" style="height:250px; background:#000; margin-top:5px;"></div>
-            </div>
-            <div id="tab-paint" class="page"><canvas id="paint-canvas"></canvas></div>
-            <div id="tab-games" class="page"><div id="mines-grid" class="mines-grid"></div></div>
         </div>
     </div>
 </div>
 
 <script>
-    const config = {
-        clusterId: 'free.blr2',
-        apiKey: '0iYPnJ73GIaHA4RqdncbL65VJjQcjXxBidYb8K6B',
-        notifySelf: true
-    };
+    // ПРЯМОЙ АДРЕС СЕРВЕРА (БЕЗ БИБЛИОТЕК)
+    const clusterId = 'free.blr2';
+    const apiKey = '0iYPnJ73GIaHA4RqdncbL65VJjQcjXxBidYb8K6B';
+    const wsUrl = `wss://${clusterId}.piesocket.com/v3/freenet-room?api_key=${apiKey}&notify_self=1`;
 
-    let channel;
+    let socket;
 
-    function initNetwork() {
-        if (typeof PieSocket === 'undefined') {
-            document.getElementById('status').innerText = "• ОШИБКА ЗАГРУЗКИ СКРИПТА";
-            return;
-        }
-        try {
-            const pieSocket = new PieSocket.default(config);
-            pieSocket.subscribe('freenet-main-room').then((ch) => {
-                channel = ch;
-                document.getElementById('status').innerText = "• В СЕТИ";
-                document.getElementById('status').style.color = "green";
-                channel.on('message', (event) => {
-                    displayMsg(JSON.parse(event.data));
-                });
-            }).catch(e => {
-                document.getElementById('status').innerText = "• ОШИБКА КЛЮЧА";
-                document.getElementById('status').style.color = "red";
-            });
-        } catch(err) {
-            document.getElementById('status').innerText = "• ОШИБКА СЕТИ";
-        }
+    function connect() {
+        socket = new WebSocket(wsUrl);
+
+        socket.onopen = () => {
+            document.getElementById('status').innerText = "• В СЕТИ";
+            document.getElementById('status').style.color = "green";
+        };
+
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const box = document.getElementById('messages');
+            const msg = document.createElement('div');
+            msg.style.marginBottom = '5px';
+            msg.innerHTML = `<img src="${data.ava}" width="18" style="vertical-align:middle"> <b>${data.nick}:</b> ${data.msg}`;
+            box.appendChild(msg);
+            box.scrollTop = box.scrollHeight;
+        };
+
+        socket.onclose = () => {
+            document.getElementById('status').innerText = "• СОЕДИНЕНИЕ ПОТЕРЯНО";
+            document.getElementById('status').style.color = "red";
+            setTimeout(connect, 3000); // Автопереподключение
+        };
     }
 
     function sendMsg() {
         const input = document.getElementById('msg-input');
-        if(!channel || input.value.trim() === "") return;
-        const payload = {
-            nick: document.getElementById('nick').value || "Аноним",
-            msg: input.value,
-            ava: document.getElementById('ava-url').value || "https://via.placeholder.com/20"
-        };
-        channel.publish(JSON.stringify(payload));
-        input.value = '';
+        if (socket.readyState === WebSocket.OPEN && input.value.trim() !== "") {
+            const payload = {
+                nick: document.getElementById('nick').value,
+                msg: input.value,
+                ava: document.getElementById('ava-url').value
+            };
+            socket.send(JSON.stringify(payload));
+            input.value = "";
+        }
     }
 
-    function displayMsg(data) {
-        const box = document.getElementById('messages');
-        const msg = document.createElement('div');
-        msg.style.marginBottom = '8px';
-        msg.innerHTML = `<img src="${data.ava}" width="20" height="20" style="vertical-align:middle; border:1px solid #000; margin-right:5px;"> <b>${data.nick}:</b> ${data.msg}`;
-        box.appendChild(msg);
-        box.scrollTop = box.scrollHeight;
-        try {
-            const ac = new (window.AudioContext || window.webkitAudioContext)();
-            const o = ac.createOscillator(); const g = ac.createGain();
-            o.connect(g); g.connect(ac.destination);
-            o.frequency.value = 800; g.gain.value = 0.02;
-            o.start(); o.stop(ac.currentTime + 0.1);
-        } catch(e) {}
-    }
-
-    function switchTab(id) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.tab').forEach
+    connect();
+</script>
+</body>
+</html>
