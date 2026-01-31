@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>FreeNet - Global Hub (GitHub Edition)</title>
-<script src="https://cdn.jsdelivr.net/npm/piesocket-js@2.0.6/dist/piesocket.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/piesocket-js@2.0.6/dist/piesocket.js"></script>
     <style id="user-styles"></style>
     <style>
         :root { --win-bg: #c0c0c0; --win-blue: #000080; }
@@ -23,9 +23,8 @@
         input, textarea { border: 2px inset #fff; padding: 4px; font-family: 'Tahoma'; }
         button { background: var(--win-bg); border: 2px outset #fff; cursor: pointer; font-weight: bold; padding: 4px 10px; }
         button:active { border: 2px inset #fff; }
-        /* Сапер & Paint */
         .mines-grid { display: grid; grid-template-columns: repeat(10, 26px); gap: 1px; background: #888; border: 2px solid #333; margin: 0 auto; }
-        .cell { width: 26px; height: 26px; background: #ccc; border: 2px outset #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; font-weight: bold; user-select: none; }
+        .cell { width: 26px; height: 26px; background: #ccc; border: 2px outset #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; font-weight: bold; }
         .cell.open { border: 1px solid #999; background: #ddd; }
         #paint-canvas { border: 1px solid #000; background: white; flex-grow: 1; touch-action: none; cursor: crosshair; }
     </style>
@@ -69,7 +68,6 @@
 </div>
 
 <script>
-    // --- ПОДКЛЮЧЕНИЕ PIESOCKET (ИСПРАВЛЕНО) ---
     const config = {
         clusterId: 'free.blr2',
         apiKey: '0iYPnJ73GIaHA4RqdncbL65VJjQcjXxBidYb8K6B',
@@ -79,39 +77,36 @@
     let channel;
 
     function initNetwork() {
+        if (typeof PieSocket === 'undefined') {
+            document.getElementById('status').innerText = "• ОШИБКА ЗАГРУЗКИ СКРИПТА";
+            return;
+        }
         try {
             const pieSocket = new PieSocket.default(config);
-            
             pieSocket.subscribe('freenet-main-room').then((ch) => {
                 channel = ch;
                 document.getElementById('status').innerText = "• В СЕТИ";
                 document.getElementById('status').style.color = "green";
-
                 channel.on('message', (event) => {
-                    const data = JSON.parse(event.data);
-                    displayMsg(data);
+                    displayMsg(JSON.parse(event.data));
                 });
             }).catch(e => {
-                document.getElementById('status').innerText = "• ОШИБКА ДОСТУПА";
+                document.getElementById('status').innerText = "• ОШИБКА КЛЮЧА";
                 document.getElementById('status').style.color = "red";
-                console.error(e);
             });
         } catch(err) {
-            document.getElementById('status').innerText = "• СБОЙ БИБЛИОТЕКИ";
-            console.error(err);
+            document.getElementById('status').innerText = "• ОШИБКА СЕТИ";
         }
     }
 
     function sendMsg() {
         const input = document.getElementById('msg-input');
         if(!channel || input.value.trim() === "") return;
-
         const payload = {
             nick: document.getElementById('nick').value || "Аноним",
             msg: input.value,
             ava: document.getElementById('ava-url').value || "https://via.placeholder.com/20"
         };
-
         channel.publish(JSON.stringify(payload));
         input.value = '';
     }
@@ -123,85 +118,15 @@
         msg.innerHTML = `<img src="${data.ava}" width="20" height="20" style="vertical-align:middle; border:1px solid #000; margin-right:5px;"> <b>${data.nick}:</b> ${data.msg}`;
         box.appendChild(msg);
         box.scrollTop = box.scrollHeight;
-        
-        // Звук бипа
-        const ac = new (window.AudioContext || window.webkitAudioContext)();
-        const o = ac.createOscillator(); const g = ac.createGain();
-        o.connect(g); g.connect(ac.destination);
-        o.frequency.value = 800; g.gain.value = 0.02;
-        o.start(); o.stop(ac.currentTime + 0.1);
+        try {
+            const ac = new (window.AudioContext || window.webkitAudioContext)();
+            const o = ac.createOscillator(); const g = ac.createGain();
+            o.connect(g); g.connect(ac.destination);
+            o.frequency.value = 800; g.gain.value = 0.02;
+            o.start(); o.stop(ac.currentTime + 0.1);
+        } catch(e) {}
     }
 
-    // --- ИНТЕРФЕЙС ---
     function switchTab(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        event.currentTarget.classList.add('active');
-        if(id === 'tab-paint') setTimeout(resizeCanvas, 50);
-    }
-
-    function applyDesign() {
-        const bg = document.getElementById('bg-url').value;
-        if(bg) document.body.style.backgroundImage = `url('${bg}')`;
-        document.getElementById('view-ava').src = document.getElementById('ava-url').value || 'https://via.placeholder.com/150';
-        document.getElementById('user-styles').innerHTML = document.getElementById('custom-css').value;
-    }
-
-    // --- КИНО / PAINT / САПЕР ---
-    function loadVideo() {
-        const url = document.getElementById('v-url').value;
-        const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-        if(m) document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube-nocookie.com/embed/${m[1]}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
-    }
-
-    const canvas = document.getElementById('paint-canvas');
-    const ctx = canvas.getContext('2d');
-    let drawing = false;
-    function resizeCanvas() { const r = canvas.getBoundingClientRect(); canvas.width = r.width; canvas.height = r.height; }
-    canvas.onmousedown = (e) => { drawing = true; ctx.beginPath(); draw(e); };
-    window.onmouseup = () => drawing = false;
-    canvas.onmousemove = draw;
-    function draw(e) {
-        if(!drawing) return;
-        const r = canvas.getBoundingClientRect();
-        ctx.lineWidth = document.getElementById('p-size')?.value || 5;
-        ctx.lineCap = 'round'; ctx.strokeStyle = document.getElementById('p-color')?.value || '#000';
-        ctx.lineTo(e.clientX - r.left, e.clientY - r.top);
-        ctx.stroke(); ctx.beginPath(); ctx.moveTo(e.clientX - r.left, e.clientY - r.top);
-    }
-
-    let mData = [];
-    function initMines() {
-        const grid = document.getElementById('mines-grid');
-        grid.innerHTML = ''; mData = [];
-        for(let i=0; i<100; i++) mData.push({ b: false, s: 'c', n: 0 });
-        let b = 0; while(b<12) { let r=Math.floor(Math.random()*100); if(!mData[r].b){mData[r].b=true; b++;} }
-        mData.forEach((d, i) => {
-            if(d.b) return;
-            let r=Math.floor(i/10), c=i%10, count=0;
-            for(let x=-1; x<=1; x++) for(let y=-1; y<=1; y++) {
-                let nr=r+x, nc=c+y; if(nr>=0 && nr<10 && nc>=0 && nc<10 && !(x===0 && y===0) && mData[nr*10+nc].b) count++;
-            }
-            d.n = count;
-        });
-        mData.forEach((d, i) => {
-            const el = document.createElement('div'); el.className = 'cell';
-            el.onclick = () => {
-                if(d.s!=='c') return; d.s='o'; el.classList.add('open');
-                if(d.b){ el.innerText='💣'; alert('BOOM!'); initMines(); }
-                else { el.innerText=d.n||''; checkWin(); }
-            };
-            grid.appendChild(el);
-        });
-    }
-    function checkWin(){ if(mData.every(d=>(d.b && d.s==='f') || (!d.b && d.s==='o'))) alert('WIN!'); }
-
-    window.onload = () => {
-        initNetwork();
-        initMines();
-    };
-</script>
-</body>
-
-</html>
+        document.querySelectorAll('.tab').forEach
