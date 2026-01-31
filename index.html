@@ -2,78 +2,100 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>FreeNet Ultimate - Direct Edition</title>
+    <title>FreeNet - Global Ultimate Hub</title>
     <style id="user-styles"></style>
     <style>
         :root { --win-bg: #c0c0c0; --win-blue: #000080; }
-        body { background: #008080; font-family: 'Tahoma', sans-serif; margin: 0; padding: 20px; transition: 0.3s; }
-        .window { width: 900px; background: var(--win-bg); border: 2px solid #fff; border-right: 2px solid #000; border-bottom: 2px solid #000; margin: 0 auto; box-shadow: 4px 4px 15px rgba(0,0,0,0.5); }
-        .title-bar { background: linear-gradient(90deg, var(--win-blue), #1084d0); color: white; padding: 4px 8px; font-weight: bold; display: flex; justify-content: space-between; }
+        body { background: #008080; font-family: 'Tahoma', sans-serif; margin: 0; padding: 20px; overflow: hidden; background-size: cover; background-position: center; }
+        
+        /* ЭФФЕКТ СНЕГА */
+        #snow-canvas { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9999; }
+
+        .window { width: 900px; background: var(--win-bg); border: 2px solid #fff; border-right: 2px solid #000; border-bottom: 2px solid #000; margin: 0 auto; position: relative; z-index: 10; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); }
+        .title-bar { background: linear-gradient(90deg, var(--win-blue), #1084d0); color: white; padding: 4px 8px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        
         .tabs { display: flex; background: var(--win-bg); padding: 5px 5px 0 5px; gap: 3px; border-bottom: 2px solid #888; }
         .tab { padding: 6px 15px; border: 1px solid #000; border-bottom: none; cursor: pointer; background: #999; font-size: 11px; font-weight: bold; color: #fff; }
         .tab.active { background: #eee; color: #000; position: relative; top: 1px; border-bottom: 1px solid #eee; }
+
         .main-layout { display: flex; gap: 10px; padding: 10px; height: 580px; }
         .sidebar { width: 230px; background: #eee; border: 2px inset #fff; padding: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
-        .viewport { flex-grow: 1; background: #fff; border: 2px inset #fff; display: flex; flex-direction: column; overflow: hidden; }
+        .viewport { flex-grow: 1; background: #fff; border: 2px inset #fff; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        
         .page { display: none; flex-direction: column; height: 100%; padding: 10px; box-sizing: border-box; }
         .page.active { display: flex; }
-        #messages, #cinema-messages { flex-grow: 1; overflow-y: auto; padding: 10px; border: 1px inset #ccc; background: white; font-size: 13px; margin-bottom: 5px; }
-        .controls { display: flex; gap: 5px; padding: 5px 0; }
-        input, textarea { border: 2px inset #fff; padding: 4px; font-family: 'Tahoma'; }
-        button { background: var(--win-bg); border: 2px outset #fff; cursor: pointer; padding: 4px 10px; font-weight: bold; }
+
+        #messages, #cinema-messages { flex-grow: 1; overflow-y: auto; padding: 10px; background: white; border: 1px inset #ccc; font-size: 13px; margin-bottom: 5px; }
+        .controls { padding: 5px 0; display: flex; gap: 5px; }
+        
+        input, textarea { border: 2px inset #fff; padding: 4px; font-family: 'Tahoma'; width: 100%; box-sizing: border-box; }
+        button { background: var(--win-bg); border: 2px outset #fff; cursor: pointer; font-weight: bold; padding: 4px 10px; white-space: nowrap; }
         button:active { border: 2px inset #fff; }
-        #paint-canvas { border: 1px solid #000; background: white; flex-grow: 1; cursor: crosshair; touch-action: none; }
+
+        /* САПЕР */
         .mines-grid { display: grid; grid-template-columns: repeat(10, 26px); gap: 1px; background: #888; border: 2px solid #333; margin: 0 auto; }
-        .cell { width: 26px; height: 26px; background: #ccc; border: 2px outset #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; }
+        .cell { width: 26px; height: 26px; background: #ccc; border: 2px outset #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; font-weight: bold; }
         .cell.open { border: 1px solid #999; background: #ddd; }
+        
+        /* PAINT */
+        #paint-canvas { border: 1px solid #000; background: white; flex-grow: 1; touch-action: none; cursor: crosshair; }
     </style>
 </head>
 <body>
 
+<canvas id="snow-canvas"></canvas>
+
 <div class="window">
-    <div class="title-bar"><span>FreeNet_Mega_Direct.exe</span><span>[?] [X]</span></div>
+    <div class="title-bar"><span>FreeNet_Ultimate_v3.exe</span><span>[?] [X]</span></div>
+    
     <div class="tabs">
         <div class="tab active" onclick="switchTab('tab-chat')">Чат</div>
         <div class="tab" onclick="switchTab('tab-cinema')">Кино</div>
         <div class="tab" onclick="switchTab('tab-paint')">Paint</div>
         <div class="tab" onclick="switchTab('tab-games')">Сапёр</div>
     </div>
+
     <div class="main-layout">
         <div class="sidebar">
-            <img id="view-ava" src="https://via.placeholder.com/150" style="width:100%; border:2px inset #fff;">
+            <img id="view-ava" src="https://via.placeholder.com/150" style="width:100%; border:2px inset #fff; margin-bottom:5px; background: white;">
             <strong>Профиль:</strong>
-            <input type="text" id="nick" placeholder="Ник" value="User">
-            <input type="text" id="ava-url" placeholder="URL аватарки">
+            <input type="text" id="nick" placeholder="Твой ник" value="Аноним">
+            <input type="text" id="ava-url" placeholder="URL аватарки" oninput="updateAvaPreview()">
             <hr style="width:100%">
             <strong>Дизайн:</strong>
             <input type="text" id="bg-url" placeholder="URL фона">
-            <textarea id="custom-css" placeholder="Твой CSS..."></textarea>
-            <button onclick="applyDesign()" style="background:#ffcc00;">ОБНОВИТЬ</button>
-            <div id="status" style="color: orange; font-weight: bold; margin-top: 5px;">• ПОИСК СЕТИ...</div>
+            <textarea id="custom-css" placeholder="Вставь CSS..." rows="3"></textarea>
+            <button onclick="applyDesign()" style="background:#ffcc00; color:#000;">ПРИМЕНИТЬ</button>
+            <div id="status" style="font-size:10px; color:orange; margin-top:5px;">• СОЕДИНЕНИЕ...</div>
         </div>
+
         <div class="viewport">
             <div id="tab-chat" class="page active">
                 <div id="messages"></div>
                 <div class="controls">
-                    <input type="text" id="msg-input" style="flex-grow:1" onkeypress="if(event.key==='Enter') sendMsg()">
-                    <button onclick="sendMsg()">></button>
+                    <input type="text" id="msg-input" style="flex-grow:1" placeholder="Введите сообщение..." onkeypress="if(event.key==='Enter') sendMsg()">
+                    <button onclick="sendMsg()">ОТПРАВИТЬ</button>
                 </div>
             </div>
+
             <div id="tab-cinema" class="page">
                 <div class="controls">
                     <input type="text" id="v-url" style="flex-grow:1" placeholder="YouTube URL">
-                    <button onclick="loadVideo()">OK</button>
+                    <button onclick="loadVideo()">PLAY</button>
                 </div>
-                <div id="video-container" style="height:250px; background:#000; margin-bottom:10px;"></div>
+                <div id="video-container" style="height:250px; background:#000; display:flex; align-items:center; justify-content:center; color: #fff;">Плеер</div>
                 <div id="cinema-messages"></div>
             </div>
+
             <div id="tab-paint" class="page">
                 <div class="controls">
-                    <input type="color" id="p-color"> <input type="range" id="p-size" min="1" max="20" value="5">
+                    <input type="color" id="p-color" value="#000000">
+                    <input type="range" id="p-size" min="1" max="20" value="5">
                     <button onclick="clearCanvas()">Очистить</button>
                 </div>
                 <canvas id="paint-canvas"></canvas>
             </div>
+
             <div id="tab-games" class="page">
                 <div id="mines-grid" class="mines-grid"></div>
                 <button onclick="initMines()" style="margin-top:10px;">НОВАЯ ИГРА</button>
@@ -83,7 +105,7 @@
 </div>
 
 <script>
-    // --- ПРЯМОЕ ПОДКЛЮЧЕНИЕ ЧЕРЕЗ WEBSOCKET ---
+    // --- СЕТЬ (NATIVE WEBSOCKET) ---
     const clusterId = 'free.blr2';
     const apiKey = '0iYPnJ73GIaHA4RqdncbL65VJjQcjXxBidYb8K6B';
     const wsUrl = `wss://${clusterId}.piesocket.com/v3/freenet-room?api_key=${apiKey}&notify_self=1`;
@@ -101,18 +123,17 @@
         };
         socket.onclose = () => {
             document.getElementById('status').innerText = "• ПЕРЕПОДКЛЮЧЕНИЕ...";
-            document.getElementById('status').style.color = "orange";
-            setTimeout(connect, 3000);
+            setTimeout(connect, 2000);
         };
     }
 
     function sendMsg() {
         const inp = document.getElementById('msg-input');
-        if(socket && socket.readyState === 1 && inp.value.trim() !== "") {
+        if (socket.readyState === WebSocket.OPEN && inp.value.trim()) {
             const payload = {
-                nick: document.getElementById('nick').value || "Аноним",
+                nick: document.getElementById('nick').value,
                 msg: inp.value,
-                ava: document.getElementById('ava-url').value || "https://via.placeholder.com/20"
+                ava: document.getElementById('ava-url').value || 'https://via.placeholder.com/20'
             };
             socket.send(JSON.stringify(payload));
             inp.value = "";
@@ -121,78 +142,89 @@
 
     function displayMsg(data) {
         const box = document.getElementById('messages');
-        const msg = document.createElement('div');
-        msg.style.marginBottom = '5px';
-        msg.innerHTML = `<img src="${data.ava}" width="18" style="vertical-align:middle; border:1px solid #000;"> <b>${data.nick}:</b> ${data.msg}`;
-        box.appendChild(msg);
+        const div = document.createElement('div');
+        div.style.marginBottom = '5px';
+        div.innerHTML = `<img src="${data.ava}" width="18" style="vertical-align:middle; border:1px solid #000;"> <b>${data.nick}:</b> ${data.msg}`;
+        box.appendChild(div);
         box.scrollTop = box.scrollHeight;
-        beep();
     }
 
-    // --- ФУНКЦИИ ИНТЕРФЕЙСА ---
-    function switchTab(id) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        event.currentTarget.classList.add('active');
-        if(id === 'tab-paint') setTimeout(resizeCanvas, 50);
+    // --- ОФОРМЛЕНИЕ ---
+    function updateAvaPreview() {
+        document.getElementById('view-ava').src = document.getElementById('ava-url').value || 'https://via.placeholder.com/150';
     }
 
     function applyDesign() {
         const bg = document.getElementById('bg-url').value;
         if(bg) document.body.style.backgroundImage = `url('${bg}')`;
-        document.getElementById('view-ava').src = document.getElementById('ava-url').value || 'https://via.placeholder.com/150';
         document.getElementById('user-styles').innerHTML = document.getElementById('custom-css').value;
+        updateAvaPreview();
     }
 
+    function switchTab(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'tab-paint') setTimeout(resizeCanvas, 50);
+    }
+
+    // --- КИНО / PAINT / САПЕР ---
     function loadVideo() {
         const url = document.getElementById('v-url').value;
         const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
         if(m) document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube-nocookie.com/embed/${m[1]}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
     }
 
-    // Paint
     const canvas = document.getElementById('paint-canvas');
     const ctx = canvas.getContext('2d');
-    let draw = false;
+    let drawing = false;
     function resizeCanvas() { const r = canvas.getBoundingClientRect(); canvas.width = r.width; canvas.height = r.height; }
-    canvas.onmousedown = (e) => { draw = true; ctx.beginPath(); };
-    window.onmouseup = () => draw = false;
+    canvas.onmousedown = () => drawing = true;
+    window.onmouseup = () => { drawing = false; ctx.beginPath(); };
     canvas.onmousemove = (e) => {
-        if(!draw) return;
+        if(!drawing) return;
         const r = canvas.getBoundingClientRect();
         ctx.lineWidth = document.getElementById('p-size').value;
-        ctx.lineCap = 'round'; ctx.strokeStyle = document.getElementById('p-color').value;
+        ctx.strokeStyle = document.getElementById('p-color').value;
+        ctx.lineCap = 'round';
         ctx.lineTo(e.clientX - r.left, e.clientY - r.top);
         ctx.stroke(); ctx.beginPath(); ctx.moveTo(e.clientX - r.left, e.clientY - r.top);
     };
     function clearCanvas() { ctx.clearRect(0,0,canvas.width,canvas.height); }
 
-    // Сапер
     function initMines() {
-        const grid = document.getElementById('mines-grid');
-        grid.innerHTML = ''; let m = [];
-        for(let i=0; i<100; i++) m.push({ b: false, s: 'c', n: 0 });
-        let b = 0; while(b<12) { let r=Math.floor(Math.random()*100); if(!m[r].b){m[r].b=true; b++;} }
+        const grid = document.getElementById('mines-grid'); grid.innerHTML = '';
+        let m = Array(100).fill().map(() => ({ b: Math.random() < 0.15, o: false }));
         m.forEach((d, i) => {
             const el = document.createElement('div'); el.className = 'cell';
             el.onclick = () => {
-                if(d.s!=='c') return; d.s='o'; el.classList.add('open');
-                if(d.b){ el.innerText='💣'; alert('BOOM!'); initMines(); }
-                else { el.innerText=' '; }
+                if(d.o) return; d.o = true; el.classList.add('open');
+                if(d.b) { el.innerText = '💣'; alert('BOOM!'); initMines(); }
+                else el.innerText = 'OK';
             };
             grid.appendChild(el);
         });
     }
 
-    function beep() {
-        const ac=new(window.AudioContext||window.webkitAudioContext)();
-        const o=ac.createOscillator(); const g=ac.createGain();
-        o.connect(g); g.connect(ac.destination); o.frequency.value=700; g.gain.value=0.01;
-        o.start(); o.stop(ac.currentTime+0.1);
+    // --- СНЕЖИНКИ (ЭФФЕКТ) ---
+    const snow = document.getElementById('snow-canvas');
+    const sctx = snow.getContext('2d');
+    let flakes = [];
+    function resizeSnow() { snow.width = window.innerWidth; snow.height = window.innerHeight; }
+    window.onresize = resizeSnow; resizeSnow();
+    for(let i=0; i<100; i++) flakes.push({ x: Math.random()*snow.width, y: Math.random()*snow.height, r: Math.random()*3+1, d: Math.random()*1 });
+    function drawSnow() {
+        sctx.clearRect(0,0,snow.width,snow.height);
+        sctx.fillStyle = "white"; sctx.beginPath();
+        flakes.forEach(f => {
+            sctx.moveTo(f.x, f.y); sctx.arc(f.x, f.y, f.r, 0, Math.PI*2);
+            f.y += Math.cos(f.d) + 1 + f.r/2; f.x += Math.sin(f.d) * 2;
+            if(f.y > snow.height) { f.y = -10; f.x = Math.random()*snow.width; }
+        });
+        sctx.fill(); requestAnimationFrame(drawSnow);
     }
 
-    window.onload = () => { connect(); initMines(); };
+    connect(); initMines(); drawSnow();
 </script>
 </body>
 </html>
