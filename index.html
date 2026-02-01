@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FreeNet v7.3 - Aero PM & Sync</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/192">
+    
+    <title>FreeNet v7.5 - Full Aero App</title>
     <style id="custom-css-style"></style>
     <style>
         :root {
@@ -17,18 +21,14 @@
             background: #008080 url('https://wallpaperaccess.com/full/1155027.jpg') no-repeat center center fixed;
             background-size: cover;
             font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            padding: 20px;
-            color: #fff;
-            min-height: 100vh;
+            margin: 0; padding: 20px; color: #fff; min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .glass-panel {
             background: var(--aero-bg);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid var(--aero-border);
-            border-radius: 12px;
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--aero-border); border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 0 10px rgba(255,255,255,0.2);
             color: #000;
         }
@@ -40,9 +40,8 @@
         }
 
         .window {
-            width: 100%; max-width: 1100px;
-            margin: 0 auto; display: flex; flex-direction: column;
-            height: 85vh; overflow: hidden;
+            width: 100%; max-width: 1100px; margin: 0 auto;
+            display: flex; flex-direction: column; height: 85vh; overflow: hidden;
         }
 
         .title-bar {
@@ -54,8 +53,7 @@
 
         .main-layout { display: flex; flex: 1; padding: 10px; gap: 15px; overflow: hidden; }
 
-        .sidebar { width: 260px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
-
+        .sidebar { width: 260px; display: flex; flex-direction: column; gap: 10px; }
         .profile-card { padding: 15px; text-align: center; }
         .profile-card img {
             width: 100px; height: 100px; border-radius: 50%;
@@ -75,16 +73,22 @@
         .tab-btn {
             flex: 1; padding: 8px; border: none; border-radius: 6px;
             background: transparent; color: #000; cursor: pointer;
-            transition: 0.3s; font-weight: 500; font-size: 12px;
+            transition: 0.3s; font-weight: 500; font-size: 11px;
         }
         .tab-btn.active { background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
         .page { display: none; flex-direction: column; height: 100%; overflow-y: auto; }
         .page.active { display: flex; }
 
-        #messages {
+        #messages, #board-messages, #friends-page-list {
             flex: 1; background: rgba(255,255,255,0.7); border-radius: 8px;
             margin-bottom: 10px; padding: 15px; overflow-y: auto;
+        }
+
+        .friend-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px; border-bottom: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.4); border-radius: 8px; margin-bottom: 5px;
         }
 
         input, textarea {
@@ -98,8 +102,13 @@
             color: #fff; font-weight: bold; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
 
-        .msg-nick { cursor: pointer; color: var(--win-blue); text-decoration: underline; }
-        .pm-notify { background: #ffeb3b; padding: 2px 5px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .call-btn { background: #4CAF50; color: #fff; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; margin-left: 3px; }
+        .video-btn { background: #2196F3; }
+
+        #call-window {
+            display: none; position: fixed; top: 5%; left: 5%; width: 90%; height: 90%;
+            z-index: 20000; background: #000; border-radius: 15px; border: 4px solid var(--win-blue);
+        }
 
         @media (max-width: 768px) {
             body { padding: 0; }
@@ -115,9 +124,17 @@
 </head>
 <body>
 
+<div id="call-window">
+    <div class="title-bar" style="background: #000; color: #fff; border-radius: 10px 10px 0 0;">
+        <span>FreeNet Call System</span>
+        <button onclick="closeCall()" style="background:red; color:white; border:none; padding:5px 10px; cursor:pointer;">ЗАВЕРШИТЬ</button>
+    </div>
+    <div id="jitsi-box" style="height: 90%;"></div>
+</div>
+
 <div id="auth-overlay">
     <div class="auth-window glass-panel" style="width:300px; padding:20px;">
-        <h2 style="margin-top:0; color:var(--win-blue)">FreeNet 7</h2>
+        <h2 style="margin-top:0; color:var(--win-blue)">FreeNet 7.5</h2>
         <input type="text" id="auth-login" placeholder="Ваш ник" style="width:100%">
         <input type="password" id="auth-pass" placeholder="Пароль" style="width:100%">
         <button class="btn-blue" onclick="handleAuth()" style="width:100%">ВОЙТИ / СОЗДАТЬ</button>
@@ -127,7 +144,7 @@
 
 <div class="window glass-panel">
     <div class="title-bar">
-        <span>FreeNet Aero v7.3</span>
+        <span>FreeNet Aero v7.5</span>
         <span id="top-clock">00:00:00</span>
     </div>
 
@@ -143,11 +160,9 @@
             </div>
 
             <div class="stats-panel glass-panel">
-                <b>Друзья:</b>
-                <div id="friends-list" style="margin-bottom:10px;"></div>
-                <b>Статистика:</b><br>
-                • Всего: <span id="stat-total">0</span><br>
-                • В сети: <span id="stat-online">1</span><br>
+                <b>Статистика системы:</b><br>
+                • Всего юзеров: <span id="stat-total">0</span><br>
+                • В сети: <span id="stat-online">0</span><br>
                 • Сообщений: <span id="stat-msgs">0</span>
                 <button onclick="logout()" style="margin-top:10px; width:100%; background:none; border:1px solid #999; border-radius:4px; cursor:pointer;">Выход</button>
             </div>
@@ -156,6 +171,7 @@
         <div class="viewport">
             <div class="tabs-aero">
                 <button class="tab-btn active" onclick="switchTab('tab-chat')">Чат</button>
+                <button class="tab-btn" onclick="switchTab('tab-friends')">Связь</button>
                 <button class="tab-btn" onclick="switchTab('tab-board')">Доска</button>
                 <button class="tab-btn" onclick="switchTab('tab-cinema')">Кино</button>
                 <button class="tab-btn" onclick="switchTab('tab-paint')">Рисование</button>
@@ -165,30 +181,48 @@
             <div id="tab-chat" class="page active">
                 <div id="messages"></div>
                 <div id="pm-info" style="display:none; padding:5px; font-size:11px; background:rgba(27,94,173,0.1);">
-                    Кому: <b id="pm-target-name"></b> <span onclick="cancelPM()" style="cursor:pointer; color:red;">[Отмена]</span>
+                    Приватно для: <b id="pm-target-name"></b> <span onclick="cancelPM()" style="cursor:pointer; color:red;">[Отмена]</span>
                 </div>
                 <div class="controls">
                     <input type="text" id="msg-input" placeholder="Напишите сообщение..." onkeypress="if(event.key==='Enter') sendMsg()">
                     <button class="btn-blue" onclick="sendMsg()">></button>
                 </div>
             </div>
-            
-            <div id="tab-board" class="page">
-                <div id="board-messages" style="flex:1; background:rgba(255,255,255,0.7); border-radius:8px; padding:10px; overflow-y:auto;"></div>
-                <div class="controls"><input type="text" id="board-input" placeholder="Пост..."><button class="btn-blue" onclick="postToBoard()">+</button></div>
+
+            <div id="tab-friends" class="page">
+                <div id="friends-page-list"></div>
+                <div style="padding:10px;"><small>* Нажми на ник в чате, чтобы добавить в друзья</small></div>
             </div>
+
+            <div id="tab-board" class="page">
+                <div id="board-messages"></div>
+                <div class="controls">
+                    <input type="text" id="board-input" placeholder="Текст на доску...">
+                    <button class="btn-blue" onclick="postToBoard()">+</button>
+                </div>
+            </div>
+
             <div id="tab-cinema" class="page">
-                <div class="controls"><input type="text" id="v-url" style="flex:1"><button class="btn-blue" onclick="syncVideo()">SYNC</button></div>
+                <div class="controls">
+                    <input type="text" id="v-url" placeholder="YouTube Link" style="flex:1">
+                    <button class="btn-blue" onclick="syncVideo()">SYNC</button>
+                </div>
                 <div id="video-container" style="flex:1; background:#000; border-radius:8px; overflow:hidden; margin-top:10px;"></div>
             </div>
+
             <div id="tab-paint" class="page">
-                <div class="controls"><input type="color" id="p-color" value="#004e92"><button class="btn-blue" onclick="clearCanvas()">Очистить</button></div>
+                <div class="controls">
+                    <input type="color" id="p-color" value="#004e92">
+                    <button class="btn-blue" onclick="clearCanvas()">Очистить всем</button>
+                </div>
                 <canvas id="paint-canvas" style="background:#fff; border-radius:8px; touch-action:none; cursor: crosshair;"></canvas>
             </div>
+
             <div id="tab-css" class="page">
                 <div class="glass-panel" style="padding:15px;">
-                    <textarea id="user-css" style="width:100%; height:150px;"></textarea>
-                    <button class="btn-blue" style="width:100%" onclick="updateUserField('css', document.getElementById('user-css').value)">Применить</button>
+                    <strong>Свой CSS Дизайн:</strong>
+                    <textarea id="user-css" style="width:100%; height:150px; margin-top:10px;"></textarea>
+                    <button class="btn-blue" style="width:100%" onclick="updateUserField('css', document.getElementById('user-css').value)">Сохранить</button>
                 </div>
             </div>
         </div>
@@ -197,16 +231,13 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, orderBy, limit, addDoc, where, or } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, orderBy, limit, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getDatabase, ref, set, onValue, onDisconnect, serverTimestamp, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBDrzNL3_kaSCU38Oac9-7CarZgqRfc9pU",
         authDomain: "freenet-3ad3c.firebaseapp.com",
         projectId: "freenet-3ad3c",
-        storageBucket: "freenet-3ad3c.firebasestorage.app",
-        messagingSenderId: "446663398146",
-        appId: "1:446663398146:web:fa47da58ec142a1203281b",
         databaseURL: "https://freenet-3ad3c-default-rtdb.europe-west1.firebasedatabase.app/"
     };
 
@@ -221,11 +252,10 @@
         const login = document.getElementById('auth-login').value.trim().toLowerCase();
         const pass = document.getElementById('auth-pass').value.trim();
         if(!login || !pass) return;
-
         const userDoc = await getDoc(doc(db, "users", login));
         if(userDoc.exists()) {
-            if(userDoc.data().pass === pass) { loginSuccess(login, userDoc.data()); }
-            else { document.getElementById('auth-error').innerText = "Ошибка доступа!"; }
+            if(userDoc.data().pass === pass) loginSuccess(login, userDoc.data());
+            else document.getElementById('auth-error').innerText = "Ошибка доступа!";
         } else {
             const newUser = { pass, ava: "", bg: "", css: "", nick: login, friends: [] };
             await setDoc(doc(db, "users", login), newUser);
@@ -237,30 +267,20 @@
         currentUser = { nick, ...data };
         document.getElementById('auth-overlay').style.display = 'none';
         document.getElementById('display-nick').innerText = nick;
-        document.getElementById('sidebar-ava').value = data.ava || "";
-        document.getElementById('sidebar-bg').value = data.bg || "";
-        document.getElementById('user-css').value = data.css || "";
-        
-        set(ref(rtdb, 'online/' + nick), true);
-        onDisconnect(ref(rtdb, 'online/' + nick)).remove();
-
         applyUserSettings();
         initApp();
+        set(ref(rtdb, 'online/' + nick), true);
+        onDisconnect(ref(rtdb, 'online/' + nick)).remove();
     }
 
     function applyUserSettings() {
         if(currentUser.bg) document.body.style.backgroundImage = `url('${currentUser.bg}')`;
         if(currentUser.ava) document.getElementById('view-ava').src = currentUser.ava;
+        document.getElementById('sidebar-ava').value = currentUser.ava || "";
+        document.getElementById('sidebar-bg').value = currentUser.bg || "";
+        document.getElementById('user-css').value = currentUser.css || "";
         document.getElementById('custom-css-style').innerText = currentUser.css || "";
         renderFriends();
-    }
-
-    function renderFriends() {
-        const list = document.getElementById('friends-list');
-        list.innerHTML = currentUser.friends?.length ? "" : "<small>Пусто</small>";
-        (currentUser.friends || []).forEach(f => {
-            list.innerHTML += `<div style="font-size:12px;">👤 ${f} <span onclick="setPM('${f}')" style="cursor:pointer; color:blue;">[ЛС]</span></div>`;
-        });
     }
 
     window.updateUserField = async (field, val) => {
@@ -269,57 +289,81 @@
         applyUserSettings();
     };
 
+    // --- ДРУЗЬЯ И ЗВОНКИ ---
+    function renderFriends() {
+        const list = document.getElementById('friends-page-list');
+        list.innerHTML = (currentUser.friends || []).length ? "" : "Здесь будет список друзей...";
+        (currentUser.friends || []).forEach(f => {
+            list.innerHTML += `
+                <div class="friend-item">
+                    <b>${f}</b>
+                    <div>
+                        <button class="call-btn" onclick="setPM('${f}'); switchTab('tab-chat')">ЛС</button>
+                        <button class="call-btn video-btn" onclick="startCall('${f}')">📞 Видеозвонок</button>
+                    </div>
+                </div>`;
+        });
+    }
+
     window.addFriend = async (nick) => {
         if(nick === currentUser.nick) return;
-        const friends = currentUser.friends || [];
+        let friends = currentUser.friends || [];
         if(!friends.includes(nick)) {
             friends.push(nick);
             await updateDoc(doc(db, "users", currentUser.nick), { friends });
-            currentUser.friends = friends;
-            renderFriends();
+            currentUser.friends = friends; renderFriends();
+            alert(nick + " добавлен в друзья!");
         }
     };
 
-    window.setPM = (nick) => {
-        pmTarget = nick;
-        document.getElementById('pm-info').style.display = 'block';
-        document.getElementById('pm-target-name').innerText = nick;
-        document.getElementById('msg-input').placeholder = `Личное сообщение для ${nick}...`;
+    window.startCall = (target) => {
+        const room = [currentUser.nick, target].sort().join("-call-");
+        addDoc(collection(db, "messages"), { 
+            nick: currentUser.nick, to: target, 
+            text: `[Входящий звонок] Нажми: <button onclick="openCallWindow('${room}')">ОТВЕТИТЬ</button>`, 
+            time: Date.now() 
+        });
+        openCallWindow(room);
     };
 
-    window.cancelPM = () => {
-        pmTarget = null;
-        document.getElementById('pm-info').style.display = 'none';
-        document.getElementById('msg-input').placeholder = "Напишите сообщение...";
+    window.openCallWindow = (room) => {
+        document.getElementById('call-window').style.display = 'block';
+        document.getElementById('jitsi-box').innerHTML = `<iframe src="https://meet.jit.si/${room}" allow="camera; microphone; fullscreen" style="width:100%; height:100%; border:none;"></iframe>`;
     };
 
+    window.closeCall = () => { document.getElementById('call-window').style.display = 'none'; document.getElementById('jitsi-box').innerHTML = ""; };
+
+    // --- ОСНОВНОЙ ФУНКЦИОНАЛ ---
     function initApp() {
-        onSnapshot(collection(db, "users"), snap => document.getElementById('stat-total').innerText = snap.size);
-        onValue(ref(rtdb, 'online'), snap => document.getElementById('stat-online').innerText = snap.exists() ? Object.keys(snap.val()).length : 0);
+        onSnapshot(collection(db, "users"), s => document.getElementById('stat-total').innerText = s.size);
+        onValue(ref(rtdb, 'online'), s => document.getElementById('stat-online').innerText = s.exists() ? Object.keys(s.val()).length : 0);
 
-        // Чат с поддержкой ЛС и единым временем
-        const q = query(collection(db, "messages"), orderBy("time", "asc"), limit(100));
-        onSnapshot(q, snap => {
-            const box = document.getElementById('messages');
-            box.innerHTML = "";
+        // Чат + ЛС
+        const qChat = query(collection(db, "messages"), orderBy("time", "asc"), limit(100));
+        onSnapshot(qChat, snap => {
+            const box = document.getElementById('messages'); box.innerHTML = "";
             document.getElementById('stat-msgs').innerText = snap.size;
             snap.forEach(d => {
                 const m = d.data();
-                // Фильтр: либо публичное, либо ЛС мне, либо ЛС от меня
                 if(!m.to || m.to === currentUser.nick || m.nick === currentUser.nick) {
-                    const isPM = m.to ? `<span class="pm-notify">ЛС</span> ` : "";
-                    const time = m.time ? new Date(m.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "...";
+                    const time = new Date(m.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
                     box.innerHTML += `<div style="padding:4px 0">
-                        <span style="opacity:0.5; font-size:10px;">${time}</span> 
-                        ${isPM}
-                        <b class="msg-nick" onclick="addFriend('${m.nick}')">${m.nick}</b>: ${m.text}
+                        <small style="opacity:0.5">${time}</small> 
+                        ${m.to ? '<span style="background:yellow; font-size:9px;">ЛС</span>' : ''}
+                        <b style="color:var(--win-blue); cursor:pointer;" onclick="addFriend('${m.nick}')">${m.nick}</b>: ${m.text}
                     </div>`;
                 }
             });
             box.scrollTop = box.scrollHeight;
         });
 
-        // Синхронизация Рисовалки и Видео (Whereby-style)
+        // Доска
+        onSnapshot(query(collection(db, "board"), orderBy("time", "desc"), limit(20)), snap => {
+            const box = document.getElementById('board-messages'); box.innerHTML = "";
+            snap.forEach(d => { box.innerHTML += `<div style="padding:10px; border-bottom:1px solid #ddd"><b>${d.data().nick}:</b> ${d.data().text}</div>`; });
+        });
+
+        // Кино
         onValue(ref(rtdb, 'sync/video'), snap => {
             const v = snap.val();
             if(v?.url) {
@@ -328,31 +372,35 @@
             }
         });
 
+        // Рисовалка
         const canvas = document.getElementById('paint-canvas');
         const ctx = canvas.getContext('2d');
         onValue(ref(rtdb, 'sync/paint'), snap => {
             const data = snap.val();
             if(!data) return;
-            if(data.action === 'clear') { ctx.clearRect(0,0,canvas.width,canvas.height); }
+            if(data.action === 'clear') ctx.clearRect(0,0,canvas.width,canvas.height);
             else if (data.points) {
-                ctx.strokeStyle = data.color; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.beginPath();
+                ctx.strokeStyle = data.color; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath();
                 ctx.moveTo(data.points[0].x, data.points[0].y);
-                data.points.forEach(p => ctx.lineTo(p.x, p.y));
-                ctx.stroke();
+                data.points.forEach(p => ctx.lineTo(p.x, p.y)); ctx.stroke();
             }
         });
     }
 
+    // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
     window.sendMsg = async () => {
-        const inp = document.getElementById('msg-input');
-        if(!inp.value.trim()) return;
-        const msg = { nick: currentUser.nick, text: inp.value, time: Date.now() }; // Используем Date.now() как fallback, но Firebase orderBy поправит
+        const inp = document.getElementById('msg-input'); if(!inp.value.trim()) return;
+        const msg = { nick: currentUser.nick, text: inp.value, time: Date.now() };
         if(pmTarget) msg.to = pmTarget;
-        await addDoc(collection(db, "messages"), msg);
+        await addDoc(collection(db, "messages"), msg); inp.value = "";
+    };
+
+    window.postToBoard = async () => {
+        const inp = document.getElementById('board-input'); if(!inp.value.trim()) return;
+        await addDoc(collection(db, "board"), { nick: currentUser.nick, text: inp.value, time: Date.now() });
         inp.value = "";
     };
 
-    // Остальные функции синхронизации
     window.syncVideo = () => {
         const url = document.getElementById('v-url').value;
         if(url) update(ref(rtdb, 'sync'), { video: { url, ts: serverTimestamp() } });
@@ -361,16 +409,17 @@
     const canvas = document.getElementById('paint-canvas');
     const ctx = canvas.getContext('2d');
     let isDrawing = false, currentBatch = [];
+
     const getPos = (e) => {
         const rect = canvas.getBoundingClientRect();
         const cx = e.touches ? e.touches[0].clientX : e.clientX;
         const cy = e.touches ? e.touches[0].clientY : e.clientY;
         return { x: cx - rect.left, y: cy - rect.top };
     };
+
     canvas.addEventListener('mousedown', (e) => { isDrawing = true; currentBatch = [getPos(e)]; });
     canvas.addEventListener('mousemove', (e) => {
-        if(!isDrawing) return;
-        const p = getPos(e); currentBatch.push(p);
+        if(!isDrawing) return; const p = getPos(e); currentBatch.push(p);
         ctx.strokeStyle = document.getElementById('p-color').value; ctx.lineTo(p.x, p.y); ctx.stroke();
     });
     window.addEventListener('mouseup', () => {
@@ -378,10 +427,12 @@
         update(ref(rtdb, 'sync'), { paint: { points: currentBatch, color: document.getElementById('p-color').value, ts: serverTimestamp() } });
     });
     canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDrawing = true; currentBatch = [getPos(e)]; });
-    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if(isDrawing) currentBatch.push(getPos(e)); });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if(isDrawing) { const p = getPos(e); currentBatch.push(p); } });
     canvas.addEventListener('touchend', () => { if(isDrawing) { isDrawing = false; update(ref(rtdb, 'sync'), { paint: { points: currentBatch, color: document.getElementById('p-color').value, ts: serverTimestamp() } }); } });
 
     window.clearCanvas = () => set(ref(rtdb, 'sync/paint'), { action: 'clear', ts: serverTimestamp() });
+    window.setPM = (nick) => { pmTarget = nick; document.getElementById('pm-info').style.display='block'; document.getElementById('pm-target-name').innerText = nick; };
+    window.cancelPM = () => { pmTarget = null; document.getElementById('pm-info').style.display='none'; };
     window.switchTab = (id) => {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -389,6 +440,7 @@
         event.target.classList.add('active');
         if(id === 'tab-paint') { canvas.width = canvas.offsetWidth; canvas.height = 400; }
     };
+
     setInterval(() => { document.getElementById('top-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
     window.logout = () => location.reload();
 </script>
