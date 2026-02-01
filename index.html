@@ -6,168 +6,152 @@
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="FreeNet">
-    <meta name="theme-color" content="#004e92">
-    <link rel="apple-touch-icon" href="https://via.placeholder.com/192/004e92/ffffff?text=FN">
-    
     <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkZyZWVOZXQgQWVybyIsCiAgInNob3J0X25hbWUiOiAiRnJlZU5ldCIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMDA0ZTkyIiwKICAidGhlbWVfY29sb3IiOiAiIzAwNGU5MiIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImh0dHBzOi8vdmlhLnBsYWNlaG9sZGVyLmNvbS8xOTIvMDA0ZTkyL2ZmZmZmZid0ZXh0PUZOIiwKICAgICAgInNpemVzIjogIjE5MngxOTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciCiAgICB9CiAgXQp9">
 
-    <title>FreeNet v7.3 - Aero App</title>
+    <title>FreeNet v8.0 - Aero Mobile</title>
     
     <style id="custom-css-style"></style>
     <style>
         :root {
             --aero-bg: rgba(255, 255, 255, 0.4);
-            --aero-border: rgba(255, 255, 255, 0.6);
-            --win-blue: #1b5ead;
-            --glass: rgba(255, 255, 255, 0.25);
+            --aero-border: rgba(255, 255, 255, 0.5);
+            --win-blue: #005a9e;
+            --header-h: 50px;
         }
 
         body {
             background: #008080 url('https://wallpaperaccess.com/full/1155027.jpg') no-repeat center center fixed;
-            background-size: cover;
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            padding: 20px;
-            color: #fff;
-            min-height: 100vh;
-            overflow: hidden; /* Чтобы не скроллился весь экран в приложении */
+            background-size: cover; font-family: 'Segoe UI', sans-serif;
+            margin: 0; padding: 0; color: #000; min-height: 100vh; overflow: hidden;
+        }
+
+        /* --- ЭКРАН ВХОДА --- */
+        #auth-overlay {
+            position: fixed; inset: 0; z-index: 99999;
+            background: url('https://wallpaperaccess.com/full/1155027.jpg') no-repeat center center;
+            background-size: cover; display: flex; align-items: center; justify-content: center;
+        }
+        .auth-card {
+            width: 320px; padding: 30px; border-radius: 20px;
+            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center;
+        }
+        .auth-card h1 { margin: 0 0 20px; color: #fff; font-weight: 300; letter-spacing: 2px; }
+        .auth-card input {
+            width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 10px;
+            border: none; background: rgba(255,255,255,0.8); box-sizing: border-box; font-size: 16px;
+        }
+
+        /* --- ШАПКА --- */
+        header {
+            height: var(--header-h); background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--aero-border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 15px; position: fixed; top: 0; width: 100%; z-index: 1000; box-sizing: border-box;
+        }
+        .logo { font-weight: bold; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+
+        /* --- ГЛАВНЫЙ КОНТЕЙНЕР --- */
+        .app-container {
+            margin-top: var(--header-h); height: calc(100vh - var(--header-h));
+            display: flex; flex-direction: column; box-sizing: border-box;
         }
 
         .glass-panel {
-            background: var(--aero-bg);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid var(--aero-border);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 0 10px rgba(255,255,255,0.2);
-            color: #000;
+            background: var(--aero-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--aero-border); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
         }
 
-        #auth-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #004e92, #000428);
-            z-index: 10000; display: flex; align-items: center; justify-content: center;
-        }
-
-        .window {
-            width: 100%; max-width: 1100px;
-            margin: 0 auto; display: flex; flex-direction: column;
-            height: 90vh; overflow: hidden;
-        }
-
-        .title-bar {
-            background: linear-gradient(to bottom, rgba(255,255,255,0.5), rgba(255,255,255,0.1));
-            padding: 10px 15px; border-radius: 12px 12px 0 0;
-            display: flex; justify-content: space-between; align-items: center;
-            font-weight: 600; text-shadow: 0 1px 2px rgba(255,255,255,0.8);
-        }
-
-        .main-layout { display: flex; flex: 1; padding: 10px; gap: 15px; overflow: hidden; }
-
-        .sidebar { width: 260px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
-
+        .main-layout { display: flex; flex: 1; padding: 10px; gap: 10px; overflow: hidden; }
+        
+        /* Sidebar (Desktop only) */
+        .sidebar { width: 250px; display: flex; flex-direction: column; gap: 10px; }
         .profile-card { padding: 15px; text-align: center; }
-        .profile-card img {
-            width: 80px; height: 80px; border-radius: 50%;
-            border: 3px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            object-fit: cover; background: #fff;
-        }
+        .profile-card img { width: 70px; height: 70px; border-radius: 50%; border: 2px solid #fff; object-fit: cover; }
 
-        .stats-panel { font-size: 11px; padding: 10px; line-height: 1.6; }
-
+        /* Игровое поле / Контент */
         .viewport { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         
         .tabs-aero {
-            display: flex; gap: 5px; padding: 5px;
-            background: rgba(0,0,0,0.1); border-radius: 8px; margin-bottom: 10px;
+            display: flex; gap: 4px; padding: 5px; background: rgba(0,0,0,0.1); border-radius: 10px; margin-bottom: 8px;
         }
         .tab-btn {
-            flex: 1; padding: 8px; border: none; border-radius: 6px;
-            background: transparent; color: #000; cursor: pointer;
-            transition: 0.3s; font-weight: 500; font-size: 11px;
+            flex: 1; padding: 10px 5px; border: none; border-radius: 8px;
+            background: transparent; color: #fff; cursor: pointer; font-size: 12px; transition: 0.2s;
         }
-        .tab-btn.active { background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .tab-btn.active { background: #fff; color: #000; font-weight: bold; }
 
-        .page { display: none; flex-direction: column; height: 100%; overflow-y: auto; }
+        .page { display: none; flex-direction: column; height: 100%; overflow-y: auto; padding-bottom: 20px; }
         .page.active { display: flex; }
 
         #messages, #board-messages {
-            flex: 1; background: rgba(255,255,255,0.7); border-radius: 8px;
-            margin-bottom: 10px; padding: 15px; overflow-y: auto;
+            flex: 1; background: rgba(255,255,255,0.6); border-radius: 10px;
+            padding: 12px; overflow-y: auto; margin-bottom: 8px;
         }
 
-        input, textarea {
-            background: rgba(255,255,255,0.9); border: 1px solid #ccc;
-            padding: 10px; border-radius: 6px; outline: none; margin-bottom: 5px; font-size: 16px; /* 16px предотвращает зум в iOS */
-        }
-
+        .controls { display: flex; gap: 5px; }
         .btn-blue {
-            background: linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%);
-            border: none; padding: 10px 20px; border-radius: 6px;
+            background: #0078d4; border: none; padding: 10px 20px; border-radius: 8px;
             color: #fff; font-weight: bold; cursor: pointer;
         }
 
-        .msg-nick { cursor: pointer; color: var(--win-blue); font-weight: bold; }
-
         @media (max-width: 768px) {
-            body { padding: 5px; }
-            .window { height: 95vh; }
-            .sidebar { display: none; } /* Скрываем сайдбар на мобилках для чистоты */
+            .sidebar { display: none; }
+            .main-layout { padding: 5px; }
+            .auth-card { width: 85%; }
         }
     </style>
 </head>
 <body>
 
 <div id="auth-overlay">
-    <div class="auth-window glass-panel" style="width:280px; padding:20px;">
-        <h2 style="margin-top:0; color:var(--win-blue); text-align:center;">FreeNet Aero</h2>
-        <input type="text" id="auth-login" placeholder="Логин" style="width:100%">
-        <input type="password" id="auth-pass" placeholder="Пароль" style="width:100%">
-        <button class="btn-blue" onclick="handleAuth()" style="width:100%">ВОЙТИ / СОЗДАТЬ</button>
-        <p id="auth-error" style="color:red; font-size:12px; text-align:center;"></p>
+    <div class="auth-card">
+        <h1>FREENET</h1>
+        <input type="text" id="auth-login" placeholder="Логин">
+        <input type="password" id="auth-pass" placeholder="Пароль">
+        <button class="btn-blue" onclick="handleAuth()" style="width:100%">ВОЙТИ</button>
+        <p id="auth-error" style="color:#ff4d4d; font-size:12px; margin-top:10px;"></p>
     </div>
 </div>
 
-<div class="window glass-panel">
-    <div class="title-bar">
-        <span>FreeNet v7.3 App</span>
-        <span id="top-clock">00:00</span>
+<header>
+    <div class="logo">FreeNet Aero</div>
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <span id="top-clock" style="color: #fff; font-family: monospace;">00:00</span>
+        <button onclick="logout()" style="background:none; border:1px solid #fff; color:#fff; border-radius:5px; padding:2px 8px; cursor:pointer; font-size:10px;">ВЫХОД</button>
     </div>
+</header>
 
+<div class="app-container">
     <div class="main-layout">
         <div class="sidebar">
             <div class="profile-card glass-panel">
-                <img id="view-ava" src="https://via.placeholder.com/80">
-                <h3 id="display-nick" style="margin:10px 0">...</h3>
-                <input type="text" id="sidebar-ava" placeholder="URL Аватарки" style="width:90%; font-size:10px" onchange="updateUserField('ava', this.value)">
-                <input type="text" id="sidebar-bg" placeholder="URL Фона" style="width:90%; font-size:10px" onchange="updateUserField('bg', this.value)">
+                <img id="view-ava" src="https://via.placeholder.com/70">
+                <h4 id="display-nick" style="margin:8px 0; color:#fff;">...</h4>
+                <input type="text" id="sidebar-ava" placeholder="URL авы" onchange="updateUserField('ava', this.value)" style="width:85%; font-size:10px; padding:5px;">
+                <input type="text" id="sidebar-bg" placeholder="URL фона" onchange="updateUserField('bg', this.value)" style="width:85%; font-size:10px; padding:5px;">
             </div>
-            <div class="stats-panel glass-panel">
-                <b>Друзья:</b>
-                <div id="friends-list" style="max-height:100px; overflow:auto;"></div>
-                <hr style="opacity:0.2">
-                • Онлайн: <span id="stat-online">0</span><br>
-                • Юзеров: <span id="stat-total">0</span>
-                <button onclick="logout()" style="margin-top:10px; width:100%; cursor:pointer;">Выход</button>
+            <div class="stats-panel glass-panel" style="padding:10px; font-size:11px; color:#fff;">
+                Онлайн: <b id="stat-online">0</b> / <span id="stat-total">0</span><br>
+                <div id="friends-list" style="margin-top:10px;"></div>
             </div>
         </div>
 
         <div class="viewport">
             <div class="tabs-aero">
-                <button class="tab-btn active" onclick="switchTab('tab-chat')">Чат</button>
-                <button class="tab-btn" onclick="switchTab('tab-board')">Доска</button>
-                <button class="tab-btn" onclick="switchTab('tab-cinema')">Кино</button>
-                <button class="tab-btn" onclick="switchTab('tab-paint')">Рисование</button>
-                <button class="tab-btn" onclick="switchTab('tab-css')">Стиль</button>
+                <button class="tab-btn active" onclick="switchTab('tab-chat')">ЧАТ</button>
+                <button class="tab-btn" onclick="switchTab('tab-board')">ДОСКА</button>
+                <button class="tab-btn" onclick="switchTab('tab-cinema')">КИНО</button>
+                <button class="tab-btn" onclick="switchTab('tab-paint')">АРТ</button>
+                <button class="tab-btn" onclick="switchTab('tab-css')">CSS</button>
             </div>
 
             <div id="tab-chat" class="page active">
                 <div id="messages"></div>
-                <div id="pm-info" style="display:none; padding:5px; font-size:11px; color:var(--win-blue)">
-                    Приват для <b id="pm-target-name"></b> <span onclick="cancelPM()" style="color:red; cursor:pointer;">[X]</span>
-                </div>
-                <div style="display:flex; gap:5px;">
+                <div id="pm-info" style="display:none; padding:5px; color:white; font-size:11px;">Приват: <b id="pm-target-name"></b> <span onclick="cancelPM()" style="color:red; cursor:pointer;">[X]</span></div>
+                <div class="controls">
                     <input type="text" id="msg-input" placeholder="Сообщение..." style="flex:1" onkeypress="if(event.key==='Enter') sendMsg()">
                     <button class="btn-blue" onclick="sendMsg()">></button>
                 </div>
@@ -175,22 +159,24 @@
 
             <div id="tab-board" class="page">
                 <div id="board-messages"></div>
-                <div style="display:flex; gap:5px;"><input type="text" id="board-input" placeholder="Пост..." style="flex:1"><button class="btn-blue" onclick="postToBoard()">+</button></div>
+                <div class="controls"><input type="text" id="board-input" placeholder="Ваш пост..." style="flex:1"><button class="btn-blue" onclick="postToBoard()">+</button></div>
             </div>
 
             <div id="tab-cinema" class="page">
-                <input type="text" id="v-url" placeholder="YouTube URL"><button class="btn-blue" onclick="syncVideo()">СИНХРО</button>
-                <div id="video-container" style="flex:1; background:#000; border-radius:8px; margin-top:10px;"></div>
+                <div class="controls"><input type="text" id="v-url" style="flex:1" placeholder="YouTube Link"><button class="btn-blue" onclick="syncVideo()">PLAY</button></div>
+                <div id="video-container" style="flex:1; background:#000; border-radius:10px; margin-top:10px; overflow:hidden;"></div>
             </div>
 
             <div id="tab-paint" class="page">
-                <div style="margin-bottom:5px;"><input type="color" id="p-color" value="#1b5ead"> <button class="btn-blue" onclick="clearCanvas()">Очистить</button></div>
-                <canvas id="paint-canvas" style="background:#fff; border-radius:8px; flex:1; touch-action:none;"></canvas>
+                <div style="margin-bottom:5px; display:flex; gap:10px;"><input type="color" id="p-color" value="#0078d4"> <button class="btn-blue" onclick="clearCanvas()">Очистить</button></div>
+                <canvas id="paint-canvas" style="background:#fff; border-radius:10px; flex:1; touch-action:none;"></canvas>
             </div>
 
             <div id="tab-css" class="page">
-                <textarea id="user-css" style="height:200px;" placeholder="Ваш CSS..."></textarea>
-                <button class="btn-blue" onclick="updateUserField('css', document.getElementById('user-css').value)">Сохранить дизайн</button>
+                <div class="glass-panel" style="padding:15px;">
+                    <textarea id="user-css" style="width:100%; height:150px; font-family:monospace; border-radius:8px;"></textarea>
+                    <button class="btn-blue" style="width:100%; margin-top:10px;" onclick="updateUserField('css', document.getElementById('user-css').value)">СОХРАНИТЬ ДИЗАЙН</button>
+                </div>
             </div>
         </div>
     </div>
@@ -215,14 +201,6 @@
     let currentUser = null;
     let pmTarget = null;
 
-    // Регистрация Service Worker для PWA (фейковый для работы манифеста)
-    if ('serviceWorker' in navigator) {
-        const sw = 'self.addEventListener("fetch", () => {});';
-        const blob = new Blob([sw], {type: 'text/javascript'});
-        const url = URL.createObjectURL(blob);
-        navigator.serviceWorker.register(url);
-    }
-
     window.handleAuth = async () => {
         const login = document.getElementById('auth-login').value.trim().toLowerCase();
         const pass = document.getElementById('auth-pass').value.trim();
@@ -230,8 +208,8 @@
 
         const userDoc = await getDoc(doc(db, "users", login));
         if(userDoc.exists()) {
-            if(userDoc.data().pass === pass) { loginSuccess(login, userDoc.data()); }
-            else { document.getElementById('auth-error').innerText = "Пароль не тот!"; }
+            if(userDoc.data().pass === pass) loginSuccess(login, userDoc.data());
+            else document.getElementById('auth-error').innerText = "Неверный пароль!";
         } else {
             const newUser = { pass, ava: "", bg: "", css: "", nick: login, friends: [] };
             await setDoc(doc(db, "users", login), newUser);
@@ -265,13 +243,13 @@
     function initApp() {
         onSnapshot(collection(db, "users"), s => document.getElementById('stat-total').innerText = s.size);
         onValue(ref(rtdb, 'online'), s => document.getElementById('stat-online').innerText = s.exists() ? Object.keys(s.val()).length : 0);
-
+        
         onSnapshot(query(collection(db, "messages"), orderBy("time", "asc"), limit(60)), snap => {
             const box = document.getElementById('messages'); box.innerHTML = "";
             snap.forEach(d => {
                 const m = d.data();
                 if(!m.to || m.to === currentUser.nick || m.nick === currentUser.nick) {
-                    box.innerHTML += `<div><b class="msg-nick" onclick="addFriend('${m.nick}')">${m.nick}</b>: ${m.text}</div>`;
+                    box.innerHTML += `<div><b style="cursor:pointer; color:var(--win-blue)" onclick="addFriend('${m.nick}')">${m.nick}</b>: ${m.text}</div>`;
                 }
             });
             box.scrollTop = box.scrollHeight;
@@ -279,13 +257,13 @@
 
         onSnapshot(query(collection(db, "board"), orderBy("time", "desc"), limit(20)), s => {
             const b = document.getElementById('board-messages'); b.innerHTML = "";
-            s.forEach(d => b.innerHTML += `<div style="padding:5px; border-bottom:1px solid #ccc"><b>${d.data().nick}:</b> ${d.data().text}</div>`);
+            s.forEach(d => b.innerHTML += `<div style="padding:5px; border-bottom:1px solid #ccc; color:#000;"><b>${d.data().nick}:</b> ${d.data().text}</div>`);
         });
 
         onValue(ref(rtdb, 'sync/video'), s => {
             const v = s.val(); if(v?.url) {
                 const id = v.url.match(/(?:v=|be\/|embed\/)([a-zA-Z0-9_-]{11})/);
-                if(id) document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id[1]}?autoplay=1" frameborder="0"></iframe>`;
+                if(id) document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id[1]}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
             }
         });
 
@@ -323,7 +301,7 @@
     function renderFriends() {
         const list = document.getElementById('friends-list'); list.innerHTML = "";
         (currentUser.friends || []).forEach(f => {
-            list.innerHTML += `<div style="display:flex; justify-content:space-between;"><span>👤 ${f}</span> <button onclick="setPM('${f}')" style="font-size:9px">ЛС</button></div>`;
+            list.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>👤 ${f}</span> <button onclick="setPM('${f}')" style="font-size:9px">ЛС</button></div>`;
         });
     }
 
@@ -336,7 +314,6 @@
     window.setPM = (n) => { pmTarget = n; document.getElementById('pm-info').style.display='block'; document.getElementById('pm-target-name').innerText = n; switchTab('tab-chat'); };
     window.cancelPM = () => { pmTarget = null; document.getElementById('pm-info').style.display='none'; };
 
-    // Paint Logic
     const canvas = document.getElementById('paint-canvas');
     const ctx = canvas.getContext('2d');
     let drawing = false, batch = [];
@@ -350,7 +327,8 @@
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        if(id === 'tab-paint') { canvas.width = canvas.parentElement.offsetWidth; canvas.height = 400; }
+        event.currentTarget.classList.add('active');
+        if(id === 'tab-paint') { canvas.width = canvas.parentElement.offsetWidth; canvas.height = 350; }
     };
 
     setInterval(() => { document.getElementById('top-clock').innerText = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }, 1000);
