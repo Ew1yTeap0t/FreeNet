@@ -3,155 +3,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FreeNet v6.2 - Pro Alpha</title>
+    <title>FreeNet v7.0 - Aero Edition</title>
     <style id="custom-css-style"></style>
     <style>
-        :root { --win-bg: #c0c0c0; --win-blue: #000080; --win-border: #808080; }
-        body { background: #008080; font-family: 'Tahoma', sans-serif; margin: 0; padding: 10px; display: flex; justify-content: center; background-attachment: fixed; background-size: cover; }
-        
-        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #008080; z-index: 10000; display: flex; align-items: center; justify-content: center; }
-        .auth-window { width: 280px; background: var(--win-bg); border: 2px outset #fff; padding: 15px; box-shadow: 4px 4px 0 #000; }
-        
-        .window { width: 100%; max-width: 1100px; background: var(--win-bg); border: 2px solid #fff; border-right: 2px solid #000; border-bottom: 2px solid #000; display: flex; flex-direction: column; height: 95vh; box-shadow: 10px 10px 20px rgba(0,0,0,0.3); }
-        .title-bar { background: linear-gradient(90deg, var(--win-blue), #1084d0); color: white; padding: 4px 8px; font-weight: bold; display: flex; justify-content: space-between; font-size: 12px; }
-        
-        .main-layout { display: flex; flex: 1; overflow: hidden; padding: 5px; gap: 5px; }
-        .sidebar { width: 240px; background: #eee; border: 2px inset #fff; padding: 10px; font-size: 11px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
-        .viewport { flex: 1; background: #fff; border: 2px inset #fff; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        
-        .stats-bar { display: flex; background: #ddd; border: 1px solid #888; padding: 5px; font-size: 10px; gap: 15px; justify-content: center; }
-        .stat-item b { color: #000080; }
+        :root {
+            --aero-bg: rgba(255, 255, 255, 0.4);
+            --aero-border: rgba(255, 255, 255, 0.6);
+            --win-blue: #1b5ead;
+            --glass: rgba(255, 255, 255, 0.25);
+        }
 
-        .tabs { display: flex; background: var(--win-bg); padding: 5px 5px 0 5px; gap: 3px; border-bottom: 2px solid var(--win-border); overflow-x: auto; }
-        .tab { padding: 6px 12px; border: 1px solid #000; border-bottom: none; cursor: pointer; background: #999; font-size: 11px; color: #fff; white-space: nowrap; }
-        .tab.active { background: #eee; color: #000; border-bottom: 1px solid #eee; }
+        body {
+            background: #008080 url('https://wallpaperaccess.com/full/1155027.jpg') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #fff;
+            min-height: 100vh;
+        }
 
-        .page { display: none; flex-direction: column; height: 100%; padding: 10px; box-sizing: border-box; overflow-y: auto; }
+        /* Эффект Aero Glass */
+        .glass-panel {
+            background: var(--aero-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--aero-border);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 0 10px rgba(255,255,255,0.2);
+            color: #000;
+        }
+
+        /* Авторизация */
+        #auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #004e92, #000428);
+            z-index: 10000; display: flex; align-items: center; justify-content: center;
+        }
+
+        /* Главное окно */
+        .window {
+            width: 100%; max-width: 1100px;
+            margin: 0 auto; display: flex; flex-direction: column;
+            height: 85vh; overflow: hidden;
+        }
+
+        .title-bar {
+            background: linear-gradient(to bottom, rgba(255,255,255,0.5), rgba(255,255,255,0.1));
+            padding: 10px 15px; border-radius: 12px 12px 0 0;
+            display: flex; justify-content: space-between; align-items: center;
+            font-weight: 600; text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+        }
+
+        .main-layout { display: flex; flex: 1; padding: 10px; gap: 15px; overflow: hidden; }
+
+        /* Сайдбар / Мобильная шапка */
+        .sidebar {
+            width: 260px; display: flex; flex-direction: column; gap: 10px;
+        }
+
+        .profile-card {
+            padding: 15px; text-align: center;
+        }
+
+        .profile-card img {
+            width: 100px; height: 100px; border-radius: 50%;
+            border: 3px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            object-fit: cover; background: #fff;
+        }
+
+        .stats-panel { font-size: 11px; padding: 10px; line-height: 1.6; }
+        .stats-panel b { color: var(--win-blue); }
+
+        /* Контентная часть */
+        .viewport { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        
+        .tabs-aero {
+            display: flex; gap: 5px; padding: 5px;
+            background: rgba(0,0,0,0.1); border-radius: 8px; margin-bottom: 10px;
+        }
+        .tab-btn {
+            flex: 1; padding: 8px; border: none; border-radius: 6px;
+            background: transparent; color: #000; cursor: pointer;
+            transition: 0.3s; font-weight: 500; font-size: 12px;
+        }
+        .tab-btn.active { background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        .page { display: none; flex-direction: column; height: 100%; overflow-y: auto; }
         .page.active { display: flex; }
 
-        #messages { flex: 1; overflow-y: auto; border: 1px inset #ccc; padding: 10px; font-size: 13px; background: #fff; }
-        .controls { display: flex; gap: 5px; padding: 8px 0; }
-        input, textarea { border: 2px inset #fff; padding: 6px; font-size: 14px; width: 100%; }
-        button { background: var(--win-bg); border: 2px outset #fff; cursor: pointer; font-weight: bold; padding: 5px 10px; font-size: 11px; }
+        #messages {
+            flex: 1; background: rgba(255,255,255,0.7); border-radius: 8px;
+            margin-bottom: 10px; padding: 15px; overflow-y: auto;
+        }
 
-        #paint-canvas { background: white; border: 1px solid #000; touch-action: none; width: 100%; height: 350px; }
+        input, textarea {
+            background: rgba(255,255,255,0.9); border: 1px solid #ccc;
+            padding: 10px; border-radius: 6px; outline: none; margin-bottom: 5px;
+        }
 
-        /* --- МОБИЛЬНЫЙ СТИЛЬ --- */
+        .btn-blue {
+            background: linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%);
+            border: none; padding: 10px 20px; border-radius: 6px;
+            color: #fff; font-weight: bold; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        /* МОБИЛЬНАЯ ВЕРСИЯ */
         @media (max-width: 768px) {
             body { padding: 0; }
-            .window { height: 100vh; border: none; }
-            .sidebar { display: none; }
-            .main-layout { flex-direction: column; padding: 0; }
-            
-            /* Верхняя мобильная шапка-аватарка */
-            .mobile-header { display: flex; align-items: center; background: #eee; padding: 10px; border-bottom: 2px solid #888; gap: 15px; }
-            .mob-ava-img { width: 60px; height: 60px; border: 2px outset #fff; object-fit: cover; }
-            .mob-info { flex: 1; font-size: 12px; }
-            
-            .tabs { background: #dcdcdc; }
-            .viewport { border: none; }
+            .window { height: 100vh; border-radius: 0; }
+            .main-layout { flex-direction: column; overflow-y: auto; }
+            .sidebar { width: 100%; }
+            .tabs-aero { order: 1; }
+            .profile-card { order: 0; }
+            .viewport { order: 2; min-height: 500px; }
+            .stats-panel { display: none; } /* Скрываем на мобилках для места */
         }
-        @media (min-width: 769px) { .mobile-header { display: none; } }
     </style>
 </head>
 <body>
 
 <div id="auth-overlay">
-    <div class="auth-window">
-        <div class="title-bar"><span>Вход в FreeNet</span></div>
-        <div style="padding: 10px;">
-            <strong>Логин:</strong><input type="text" id="auth-login"><br><br>
-            <strong>Пароль:</strong><input type="password" id="auth-pass"><br><br>
-            <button onclick="handleAuth()" style="width:100%">ВОЙТИ / СОЗДАТЬ</button>
-            <p id="auth-error" style="color:red; font-size:10px; margin-top:5px; text-align:center;"></p>
-        </div>
+    <div class="auth-window glass-panel" style="width:300px; padding:20px;">
+        <h2 style="margin-top:0; color:var(--win-blue)">FreeNet 7</h2>
+        <input type="text" id="auth-login" placeholder="Ваш ник" style="width:100%">
+        <input type="password" id="auth-pass" placeholder="Пароль" style="width:100%">
+        <button class="btn-blue" onclick="handleAuth()" style="width:100%">ВОЙТИ / СОЗДАТЬ</button>
+        <p id="auth-error" style="color:maroon; font-size:12px;"></p>
     </div>
 </div>
 
-<div class="window">
+<div class="window glass-panel">
     <div class="title-bar">
-        <span>FreeNet_v6.2_Stable.exe</span>
+        <span>FreeNet Aero v7.0</span>
         <span id="top-clock">00:00:00</span>
-    </div>
-
-    <div class="stats-bar">
-        <div class="stat-item">Всего: <b id="stat-total">0</b></div>
-        <div class="stat-item">В сети: <b id="stat-online">0</b></div>
-        <div class="stat-item">Постов: <b id="stat-msgs">0</b></div>
-    </div>
-
-    <div class="mobile-header">
-        <img id="mob-view-ava" src="https://via.placeholder.com/60" class="mob-ava-img">
-        <div class="mob-info">
-            <b id="mob-display-nick">...</b><br>
-            <button onclick="switchTab('tab-css')" style="padding:2px 5px; font-size:9px; margin-top:5px;">Настройки профиля</button>
-        </div>
-        <div id="mob-clock" style="font-weight:bold; font-size:14px;">00:00</div>
-    </div>
-    
-    <div class="tabs">
-        <div class="tab active" onclick="switchTab('tab-chat')">Чат</div>
-        <div class="tab" onclick="switchTab('tab-board')">Доска</div>
-        <div class="tab" onclick="switchTab('tab-cinema')">Кино</div>
-        <div class="tab" onclick="switchTab('tab-paint')">Рисование</div>
-        <div class="tab" onclick="switchTab('tab-css')">Профиль</div>
     </div>
 
     <div class="main-layout">
         <div class="sidebar">
-            <div style="text-align:center; border:2px inset #fff; background:#fff; padding:5px;">
-                <img id="view-ava" src="https://via.placeholder.com/150" style="width:100%; max-height:150px; object-fit:cover;">
-                <div style="font-weight:bold; font-size:14px; margin-top:5px;" id="display-nick">...</div>
+            <div class="profile-card glass-panel">
+                <img id="view-ava" src="https://via.placeholder.com/100">
+                <h3 id="display-nick" style="margin:10px 0">...</h3>
+                <div style="font-size:10px; display:flex; flex-direction:column; gap:5px;">
+                    <input type="text" id="sidebar-ava" placeholder="URL Аватарки" onchange="updateUserField('ava', this.value)">
+                    <input type="text" id="sidebar-bg" placeholder="URL Фона" onchange="updateUserField('bg', this.value)">
+                </div>
             </div>
-            <strong>Аватар URL:</strong>
-            <input type="text" id="sidebar-ava" onchange="updateUserField('ava', this.value)">
-            <strong>Фон URL:</strong>
-            <input type="text" id="sidebar-bg" onchange="updateUserField('bg', this.value)">
-            <button onclick="logout()" style="margin-top:auto; color:red;">ВЫХОД</button>
+
+            <div class="stats-panel glass-panel">
+                <b>Статистика системы:</b><br>
+                • Всего юзеров: <span id="stat-total">0</span><br>
+                • В сети: <span id="stat-online">1</span><br>
+                • Сообщений: <span id="stat-msgs">0</span>
+                <button onclick="logout()" style="margin-top:10px; width:100%; background:none; border:1px solid #999; border-radius:4px; cursor:pointer;">Выход</button>
+            </div>
         </div>
 
         <div class="viewport">
+            <div class="tabs-aero">
+                <button class="tab-btn active" onclick="switchTab('tab-chat')">Чат</button>
+                <button class="tab-btn" onclick="switchTab('tab-board')">Доска</button>
+                <button class="tab-btn" onclick="switchTab('tab-cinema')">Кино</button>
+                <button class="tab-btn" onclick="switchTab('tab-paint')">Рисование</button>
+                <button class="tab-btn" onclick="switchTab('tab-css')">Стиль</button>
+            </div>
+
             <div id="tab-chat" class="page active">
                 <div id="messages"></div>
                 <div class="controls">
-                    <input type="text" id="msg-input" placeholder="Написать..." onkeypress="if(event.key==='Enter') sendMsg()">
-                    <button onclick="sendMsg()">SEND</button>
+                    <input type="text" id="msg-input" placeholder="Напишите сообщение..." onkeypress="if(event.key==='Enter') sendMsg()">
+                    <button class="btn-blue" onclick="sendMsg()">></button>
                 </div>
             </div>
 
             <div id="tab-board" class="page">
-                <div id="board-messages"></div>
+                <div id="board-messages" style="flex:1; background:rgba(255,255,255,0.7); border-radius:8px; padding:10px; overflow-y:auto;"></div>
                 <div class="controls">
-                    <input type="text" id="board-input" placeholder="Текст объявления...">
-                    <button onclick="postToBoard()">POST</button>
+                    <input type="text" id="board-input" placeholder="Текст на доску...">
+                    <button class="btn-blue" onclick="postToBoard()">+</button>
                 </div>
             </div>
 
             <div id="tab-cinema" class="page">
                 <div class="controls">
-                    <input type="text" id="v-url" placeholder="YouTube Link">
-                    <button onclick="syncVideo()">SYNC</button>
+                    <input type="text" id="v-url" placeholder="YouTube Link" style="flex:1">
+                    <button class="btn-blue" onclick="syncVideo()">SYNC</button>
                 </div>
-                <div id="video-container" style="flex:1; background:#000;"></div>
+                <div id="video-container" style="flex:1; background:#000; border-radius:8px; overflow:hidden; margin-top:10px;"></div>
             </div>
 
             <div id="tab-paint" class="page">
                 <div class="controls">
-                    <input type="color" id="p-color">
-                    <button onclick="clearCanvas()">CLEAR ALL</button>
+                    <input type="color" id="p-color" value="#004e92">
+                    <button class="btn-blue" onclick="clearCanvas()">Очистить всем</button>
                 </div>
-                <canvas id="paint-canvas"></canvas>
+                <canvas id="paint-canvas" style="background:#fff; border-radius:8px; touch-action:none;"></canvas>
             </div>
 
             <div id="tab-css" class="page">
-                <h3>Настройки профиля</h3>
-                <div class="mobile-only-settings">
-                    <strong>Аватар URL:</strong><input type="text" id="mob-in-ava" onchange="updateUserField('ava', this.value)"><br><br>
-                    <strong>Фон URL:</strong><input type="text" id="mob-in-bg" onchange="updateUserField('bg', this.value)"><br><br>
+                <div class="glass-panel" style="padding:15px;">
+                    <strong>Aero CSS Оформление:</strong>
+                    <textarea id="user-css" style="width:100%; height:150px; margin-top:10px;" placeholder="body { filter: hue-rotate(90deg); }"></textarea>
+                    <button class="btn-blue" style="width:100%" onclick="updateUserField('css', document.getElementById('user-css').value)">Применить стиль</button>
                 </div>
-                <strong>Твой CSS код:</strong>
-                <textarea id="user-css" style="height:150px; font-family:monospace;" placeholder="body { ... }"></textarea>
-                <button onclick="updateUserField('css', document.getElementById('user-css').value)" style="margin-top:10px; width:100%;">ПРИМЕНИТЬ CSS</button>
             </div>
         </div>
     </div>
@@ -160,7 +214,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, orderBy, limit, addDoc, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getDatabase, ref, set, onValue, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue, push, onDisconnect } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBDrzNL3_kaSCU38Oac9-7CarZgqRfc9pU",
@@ -178,21 +232,19 @@
 
     let currentUser = null;
 
-    // --- АВТОРИЗАЦИЯ ---
+    // --- СИСТЕМА ВХОДА ---
     window.handleAuth = async () => {
         const login = document.getElementById('auth-login').value.trim().toLowerCase();
         const pass = document.getElementById('auth-pass').value.trim();
         if(!login || !pass) return;
 
-        const userRef = doc(db, "users", login);
-        const userDoc = await getDoc(userRef);
-
+        const userDoc = await getDoc(doc(db, "users", login));
         if(userDoc.exists()) {
             if(userDoc.data().pass === pass) { loginSuccess(login, userDoc.data()); }
-            else { document.getElementById('auth-error').innerText = "Пароль неверный!"; }
+            else { document.getElementById('auth-error').innerText = "Ошибка доступа!"; }
         } else {
-            const newUser = { pass, ava: "", bg: "", css: "", nick: login, created: Date.now() };
-            await setDoc(userRef, newUser);
+            const newUser = { pass, ava: "", bg: "", css: "", nick: login, registered: Date.now() };
+            await setDoc(doc(db, "users", login), newUser);
             loginSuccess(login, newUser);
         }
     };
@@ -200,30 +252,24 @@
     async function loginSuccess(nick, data) {
         currentUser = { nick, ...data };
         document.getElementById('auth-overlay').style.display = 'none';
-        document.querySelectorAll('#display-nick, #mob-display-nick').forEach(el => el.innerText = nick);
-        
-        // Заполняем поля
+        document.getElementById('display-nick').innerText = nick;
         document.getElementById('sidebar-ava').value = data.ava || "";
         document.getElementById('sidebar-bg').value = data.bg || "";
-        document.getElementById('mob-in-ava').value = data.ava || "";
-        document.getElementById('mob-in-bg').value = data.bg || "";
         document.getElementById('user-css').value = data.css || "";
         
+        // Счетчик онлайна
+        const onlineRef = ref(rtdb, 'online/' + nick);
+        set(onlineRef, true);
+        onDisconnect(onlineRef).remove();
+
         applyUserSettings();
         initApp();
-        updateStats();
-        
-        // Отметка "Онлайн"
-        setInterval(() => {
-            set(ref(rtdb, 'online/' + nick), Date.now());
-        }, 30000);
+        updateGlobalStats();
     }
 
     function applyUserSettings() {
         if(currentUser.bg) document.body.style.backgroundImage = `url('${currentUser.bg}')`;
-        const ava = currentUser.ava || "https://via.placeholder.com/150";
-        document.getElementById('view-ava').src = ava;
-        document.getElementById('mob-view-ava').src = ava;
+        if(currentUser.ava) document.getElementById('view-ava').src = currentUser.ava;
         document.getElementById('custom-css-style').innerText = currentUser.css || "";
     }
 
@@ -234,46 +280,48 @@
     };
 
     // --- СТАТИСТИКА ---
-    async function updateStats() {
-        const usersSnap = await getCountFromServer(collection(db, "users"));
-        document.getElementById('stat-total').innerText = usersSnap.data().count;
-        
-        const msgsSnap = await getCountFromServer(collection(db, "messages"));
-        document.getElementById('stat-msgs').innerText = msgsSnap.data().count;
+    async function updateGlobalStats() {
+        // Всего юзеров
+        const collUsers = collection(db, "users");
+        const snapshotUsers = await getCountFromServer(collUsers);
+        document.getElementById('stat-total').innerText = snapshotUsers.data().count;
 
+        // Всего сообщений
+        const collMsgs = collection(db, "messages");
+        const snapshotMsgs = await getCountFromServer(collMsgs);
+        document.getElementById('stat-msgs').innerText = snapshotMsgs.data().count;
+
+        // Онлайн
         onValue(ref(rtdb, 'online'), (snap) => {
-            const list = snap.val() || {};
-            const now = Date.now();
-            let count = 0;
-            for(let key in list) { if(now - list[key] < 60000) count++; }
-            document.getElementById('stat-online').innerText = count;
+            document.getElementById('stat-online').innerText = snap.exists() ? Object.keys(snap.val()).length : 1;
         });
     }
 
-    // --- ИНИЦИАЛИЗАЦИЯ ДВИЖКА ---
+    // --- ЛОГИКА ПРИЛОЖЕНИЯ ---
     function initApp() {
         // Чат
-        const qChat = query(collection(db, "messages"), orderBy("time", "asc"), limit(100));
-        onSnapshot(qChat, (snap) => {
+        const q = query(collection(db, "messages"), orderBy("time", "asc"), limit(70));
+        onSnapshot(q, (snap) => {
             const box = document.getElementById('messages');
             box.innerHTML = "";
             snap.forEach(d => {
                 const m = d.data();
                 const div = document.createElement('div');
-                div.innerHTML = `<small>[${new Date(m.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}]</small> <b>${m.nick}:</b> ${m.text}`;
+                div.style.padding = "5px 0";
+                div.innerHTML = `<span style="opacity:0.6; font-size:10px;">${new Date(m.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span> <b style="color:var(--win-blue)">${m.nick}:</b> ${m.text}`;
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
         });
 
         // Доска
-        const qBoard = query(collection(db, "board"), orderBy("time", "desc"), limit(20));
-        onSnapshot(qBoard, (snap) => {
+        const qB = query(collection(db, "board"), orderBy("time", "desc"), limit(20));
+        onSnapshot(qB, (snap) => {
             const box = document.getElementById('board-messages');
             box.innerHTML = "";
             snap.forEach(d => {
                 const m = d.data();
-                box.innerHTML += `<div style="border-bottom:1px solid #ccc; padding:5px;"><b>${m.nick}:</b> ${m.text}</div>`;
+                box.innerHTML += `<div style="padding:10px; border-bottom:1px solid #ddd"><b>${m.nick}:</b> ${m.text}</div>`;
             });
         });
 
@@ -282,39 +330,33 @@
             const url = snap.val();
             if(url) {
                 const id = url.match(/(?:v=|be\/|embed\/)([a-zA-Z0-9_-]{11})/);
-                if(id) document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id[1]}" frameborder="0" allowfullscreen></iframe>`;
+                if(id) document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id[1]}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
             }
         });
 
         // Рисование
-        const c = document.getElementById('paint-canvas');
-        const context = c.getContext('2d');
+        const canvas = document.getElementById('paint-canvas');
+        const ctx = canvas.getContext('2d');
         onValue(ref(rtdb, 'draw'), (snap) => {
-            const val = snap.val();
-            if(!val) return;
-            if(val.clear) { context.clearRect(0,0,c.width,c.height); context.beginPath(); }
-            else {
-                context.strokeStyle = val.color;
-                context.lineWidth = 2;
-                context.lineTo(val.x, val.y);
-                context.stroke();
-            }
+            const v = snap.val();
+            if(!v) return;
+            if(v.clear) ctx.clearRect(0,0,canvas.width,canvas.height);
+            else { ctx.strokeStyle = v.color; ctx.lineWidth = 2; ctx.lineTo(v.x, v.y); ctx.stroke(); }
         });
     }
 
-    // --- ФУНКЦИИ ОТПРАВКИ ---
     window.sendMsg = async () => {
         const inp = document.getElementById('msg-input');
         if(!inp.value.trim()) return;
-        const txt = inp.value; inp.value = "";
-        await addDoc(collection(db, "messages"), { nick: currentUser.nick, text: txt, time: Date.now() });
+        await addDoc(collection(db, "messages"), { nick: currentUser.nick, text: inp.value, time: Date.now() });
+        inp.value = "";
     };
 
     window.postToBoard = async () => {
         const inp = document.getElementById('board-input');
         if(!inp.value.trim()) return;
-        const txt = inp.value; inp.value = "";
-        await addDoc(collection(db, "board"), { nick: currentUser.nick, text: txt, time: Date.now() });
+        await addDoc(collection(db, "board"), { nick: currentUser.nick, text: inp.value, time: Date.now() });
+        inp.value = "";
     };
 
     window.syncVideo = () => { set(ref(rtdb, 'videoUrl'), document.getElementById('v-url').value); };
@@ -324,42 +366,42 @@
     const pctx = canvas.getContext('2d');
     let drawing = false;
 
-    const getPos = (e) => {
-        const r = canvas.getBoundingClientRect();
-        const cx = e.touches ? e.touches[0].clientX : e.clientX;
-        const cy = e.touches ? e.touches[0].clientY : e.clientY;
-        return { x: cx - r.left, y: cy - r.top };
+    const startDraw = (e) => {
+        drawing = true; pctx.beginPath();
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+        const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+        pctx.moveTo(x, y);
     };
 
-    const start = (e) => { drawing = true; pctx.beginPath(); const p = getPos(e); pctx.moveTo(p.x, p.y); };
-    const move = (e) => {
+    const moveDraw = (e) => {
         if(!drawing) return;
-        const p = getPos(e);
-        set(ref(rtdb, 'draw'), { x: p.x, y: p.y, color: document.getElementById('p-color').value });
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+        const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+        set(ref(rtdb, 'draw'), { x, y, color: document.getElementById('p-color').value, time: Date.now() });
     };
 
-    canvas.addEventListener('mousedown', start);
-    canvas.addEventListener('mousemove', move);
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', moveDraw);
     window.addEventListener('mouseup', () => drawing = false);
-    canvas.addEventListener('touchstart', start);
-    canvas.addEventListener('touchmove', move);
+    canvas.addEventListener('touchstart', startDraw);
+    canvas.addEventListener('touchmove', moveDraw);
+
     window.clearCanvas = () => set(ref(rtdb, 'draw'), { clear: true });
 
-    // --- ИНТЕРФЕЙС ---
+    // --- УТИЛИТЫ ---
     window.switchTab = (id) => {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        event.currentTarget.classList.add('active');
-        if(id === 'tab-paint') { canvas.width = canvas.offsetWidth; canvas.height = 350; }
+        event.target.classList.add('active');
+        if(id === 'tab-paint') { canvas.width = canvas.offsetWidth; canvas.height = 400; }
     };
 
     setInterval(() => {
         const now = new Date();
-        const msk = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (3 * 3600000));
-        const s = msk.toTimeString().split(' ')[0];
-        document.getElementById('top-clock').innerText = s;
-        document.getElementById('mob-clock').innerText = s.substring(0,5);
+        document.getElementById('top-clock').innerText = now.toLocaleTimeString();
     }, 1000);
 
     window.logout = () => { location.reload(); };
