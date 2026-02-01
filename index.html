@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://via.placeholder.com/192">
     
-    <title>FreeNet v7.8 - Discord Style Call</title>
+    <title>FreeNet v7.9 - Fixed Dynamic Call</title>
     
     <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.18.0.js"></script>
 
@@ -17,108 +17,90 @@
             --aero-bg: rgba(255, 255, 255, 0.4);
             --aero-border: rgba(255, 255, 255, 0.6);
             --win-blue: #1b5ead;
-            --glass: rgba(255, 255, 255, 0.25);
-            --island-bg: rgba(0, 0, 0, 0.85);
+            --island-bg: rgba(0, 0, 0, 0.9);
         }
 
         body {
             background: #008080 url('https://wallpaperaccess.com/full/1155027.jpg') no-repeat center center fixed;
             background-size: cover; font-family: 'Segoe UI', sans-serif;
             margin: 0; padding: 20px; color: #fff; min-height: 100vh;
-            -webkit-tap-highlight-color: transparent;
             overflow: hidden;
         }
 
         .glass-panel {
             background: var(--aero-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border: 1px solid var(--aero-border); border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 0 10px rgba(255,255,255,0.2);
-            color: #000;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3); color: #000;
         }
 
-        /* Динамический остров */
+        /* Dynamic Island */
         #dynamic-island {
-            display: none; position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
-            background: var(--island-bg); color: #fff; padding: 8px 20px;
-            border-radius: 30px; z-index: 100000; display: none; align-items: center; gap: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5); transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-            min-width: 200px; justify-content: space-between;
+            display: none; position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
+            background: var(--island-bg); color: #fff; padding: 10px 25px;
+            border-radius: 30px; z-index: 100000; align-items: center; gap: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); transition: all 0.4s ease;
+            min-width: 250px; justify-content: space-between;
         }
 
-        /* Всплывающее уведомление о звонке */
+        #remote-video-container { 
+            width: 120px; height: 70px; background: #222; border-radius: 8px; 
+            overflow: hidden; display: none; border: 1px solid #444;
+        }
+
         #incoming-call-overlay {
-            display: none; position: fixed; top: 20px; right: 20px; width: 300px;
-            z-index: 100001; padding: 20px; border: 2px solid #4CAF50; animation: slideIn 0.5s ease;
+            display: none; position: fixed; top: 25px; right: 25px; width: 320px;
+            z-index: 100001; padding: 25px; border: 2px solid #4CAF50;
+            background: rgba(255,255,255,0.9); border-radius: 15px; color: #000;
         }
 
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-
-        .window {
-            width: 100%; max-width: 1100px; margin: 0 auto;
-            display: flex; flex-direction: column; height: 85vh; overflow: hidden; position: relative;
-        }
-
-        .title-bar {
-            background: linear-gradient(to bottom, rgba(255,255,255,0.5), rgba(255,255,255,0.1));
-            padding: 10px 15px; border-radius: 12px 12px 0 0;
-            display: flex; justify-content: space-between; align-items: center;
-            font-weight: 600; text-shadow: 0 1px 2px rgba(255,255,255,0.8);
-        }
-
+        .window { width: 100%; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; height: 85vh; overflow: hidden; position: relative; }
+        .title-bar { background: linear-gradient(to bottom, rgba(255,255,255,0.5), rgba(255,255,255,0.1)); padding: 10px 15px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
         .main-layout { display: flex; flex: 1; padding: 10px; gap: 15px; overflow: hidden; }
         .sidebar { width: 260px; display: flex; flex-direction: column; gap: 10px; }
         .profile-card { padding: 15px; text-align: center; }
         .profile-card img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; }
-        
         .viewport { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .tabs-aero { display: flex; gap: 5px; padding: 5px; background: rgba(0,0,0,0.1); border-radius: 8px; margin-bottom: 10px; }
         .tab-btn { flex: 1; padding: 8px; border: none; border-radius: 6px; background: transparent; cursor: pointer; font-size: 11px; }
         .tab-btn.active { background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-
         .page { display: none; flex-direction: column; height: 100%; overflow-y: auto; }
         .page.active { display: flex; }
-
         #messages, #board-messages, #friends-page-list { flex: 1; background: rgba(255,255,255,0.7); border-radius: 8px; padding: 15px; overflow-y: auto; margin-bottom: 10px; }
-        
         .btn-blue { background: linear-gradient(to bottom, #4facfe, #00f2fe); border: none; padding: 8px 15px; border-radius: 6px; color: #fff; font-weight: bold; cursor: pointer; }
-        .btn-red { background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; }
+        
+        .friend-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.4); border-radius: 8px; margin-bottom: 5px; }
 
-        #remote-video-dock { width: 100px; height: 60px; background: #000; border-radius: 4px; display: none; }
-
-        @media (max-width: 768px) {
-            body { padding: 5px; } .window { height: 95vh; }
-            .sidebar { display: none; }
-        }
+        @media (max-width: 768px) { body { padding: 5px; } .window { height: 95vh; } .sidebar { display: none; } }
     </style>
 </head>
 <body>
 
 <div id="dynamic-island">
-    <div style="display: flex; align-items: center; gap: 10px;">
-        <span id="call-timer">00:00</span>
-        <div id="remote-video-dock"></div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <span id="call-timer" style="font-family: monospace; font-size: 16px; color: #4facfe;">00:00</span>
+        <div id="remote-video-container"></div>
     </div>
-    <div style="display: flex; gap: 8px;">
-        <button onclick="toggleMute()" id="mute-btn" style="background:none; border:none; color:white; cursor:pointer;">🎤</button>
-        <button onclick="toggleScreen()" id="screen-btn" style="background:none; border:none; color:white; cursor:pointer;">🖥️</button>
-        <button onclick="endCall()" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-weight:bold;">BYE</button>
+    <div style="display: flex; gap: 12px;">
+        <button onclick="toggleMute()" id="mute-btn" style="background:none; border:none; font-size:18px; cursor:pointer;">🎤</button>
+        <button onclick="toggleScreen()" id="screen-btn" style="background:none; border:none; font-size:18px; cursor:pointer;">🖥️</button>
+        <button onclick="endCall()" style="background:#ff4d4d; border:none; border-radius:50%; width:30px; height:30px; color:white; cursor:pointer;">✕</button>
     </div>
 </div>
 
-<div id="incoming-call-overlay" class="glass-panel">
-    <div style="font-weight: bold; margin-bottom: 10px;">📞 Входящий звонок...</div>
-    <div id="caller-name" style="margin-bottom: 15px; font-size: 1.2em;">Кто-то</div>
+<div id="incoming-call-overlay">
+    <div style="font-weight: bold; font-size: 18px;">📞 Вызов...</div>
+    <div id="caller-name" style="margin: 15px 0; font-size: 20px; color: var(--win-blue);">Ожидание...</div>
     <div style="display: flex; gap: 10px;">
-        <button class="btn-blue" id="accept-btn" style="flex:1; background: #4CAF50;">Принять</button>
-        <button class="btn-red" onclick="rejectCall()" style="flex:1;">Отклонить</button>
+        <button class="btn-blue" id="accept-btn" style="flex:1; background: #4CAF50;">ОТВЕТИТЬ</button>
+        <button class="btn-blue" onclick="rejectCall()" style="flex:1; background: #f44336;">ОТКЛОНИТЬ</button>
     </div>
 </div>
 
-<div id="auth-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(135deg, #004e92, #000428); z-index:10000; display:flex; align-items:center; justify-content:center;">
-    <div class="glass-panel" style="width:300px; padding:20px;">
-        <h2 style="margin-top:0;">FreeNet 7.8</h2>
-        <input type="text" id="auth-login" placeholder="Логин" style="width:100%; padding:10px; margin-bottom:10px;">
-        <input type="password" id="auth-pass" placeholder="Пароль" style="width:100%; padding:10px; margin-bottom:10px;">
+<div id="auth-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:10000; display:flex; align-items:center; justify-content:center;">
+    <div class="glass-panel" style="width:300px; padding:25px;">
+        <h2 style="margin:0 0 15px 0;">FreeNet 7.9</h2>
+        <input type="text" id="auth-login" placeholder="Логин" style="width:90%; padding:10px; margin-bottom:10px; border-radius:5px; border:1px solid #ccc;">
+        <input type="password" id="auth-pass" placeholder="Пароль" style="width:90%; padding:10px; margin-bottom:15px; border-radius:5px; border:1px solid #ccc;">
         <button class="btn-blue" onclick="handleAuth()" style="width:100%">ВОЙТИ</button>
     </div>
 </div>
@@ -134,14 +116,14 @@
             <div class="profile-card glass-panel">
                 <img id="view-ava" src="https://via.placeholder.com/80">
                 <h3 id="display-nick">...</h3>
-                <input type="text" id="sidebar-ava" placeholder="Ava URL" onchange="updateUserField('ava', this.value)" style="width:90%; font-size:10px;">
+                <input type="text" id="sidebar-ava" placeholder="Ava URL" onchange="updateUserField('ava', this.value)" style="width:90%; font-size:10px; margin-bottom:5px;">
                 <input type="text" id="sidebar-bg" placeholder="BG URL" onchange="updateUserField('bg', this.value)" style="width:90%; font-size:10px;">
             </div>
             <div class="stats-panel glass-panel" style="padding:10px; font-size:11px;">
                 Онлайн: <span id="stat-online">0</span><br>
-                Всего: <span id="stat-total">0</span><br>
+                Всего юзеров: <span id="stat-total">0</span><br>
                 Сообщений: <span id="stat-msgs">0</span>
-                <button onclick="logout()" style="width:100%; margin-top:10px;">ВЫХОД</button>
+                <button onclick="logout()" style="width:100%; margin-top:10px; padding:5px; border-radius:4px; border:1px solid #999; background:none; cursor:pointer;">Выход</button>
             </div>
         </div>
 
@@ -151,42 +133,39 @@
                 <button class="tab-btn" onclick="switchTab('tab-friends')">Связь</button>
                 <button class="tab-btn" onclick="switchTab('tab-board')">Доска</button>
                 <button class="tab-btn" onclick="switchTab('tab-cinema')">Кино</button>
-                <button class="tab-btn" onclick="switchTab('tab-paint')">Рисование</button>
+                <button class="tab-btn" onclick="switchTab('tab-paint')">Рисовалка</button>
                 <button class="tab-btn" onclick="switchTab('tab-css')">Стиль</button>
             </div>
 
             <div id="tab-chat" class="page active">
                 <div id="messages"></div>
-                <div id="pm-info" style="display:none; color:var(--win-blue); font-size:11px; padding:5px;">Приватно для <b id="pm-target-name"></b> <span onclick="cancelPM()" style="color:red; cursor:pointer;">[X]</span></div>
+                <div id="pm-info" style="display:none; color:var(--win-blue); font-size:11px; padding:5px;">Приват: <b id="pm-target-name"></b> <span onclick="cancelPM()" style="color:red; cursor:pointer;">[X]</span></div>
                 <div class="controls" style="display:flex; gap:5px;">
-                    <input type="text" id="msg-input" placeholder="Сообщение..." style="flex:1;" onkeypress="if(event.key==='Enter') sendMsg()">
+                    <input type="text" id="msg-input" placeholder="Сообщение..." style="flex:1; padding:10px; border-radius:5px; border:1px solid #ccc;" onkeypress="if(event.key==='Enter') sendMsg()">
                     <button class="btn-blue" onclick="sendMsg()">></button>
                 </div>
             </div>
 
-            <div id="tab-friends" class="page">
-                <div id="friends-page-list"></div>
-            </div>
+            <div id="tab-friends" class="page"><div id="friends-page-list"></div></div>
 
             <div id="tab-board" class="page">
                 <div id="board-messages"></div>
-                <input type="text" id="board-input" placeholder="На доску..."><button class="btn-blue" onclick="postToBoard()">+</button>
+                <div style="display:flex; gap:5px;"><input type="text" id="board-input" placeholder="Текст..." style="flex:1; padding:10px;"><button class="btn-blue" onclick="postToBoard()">+</button></div>
             </div>
 
             <div id="tab-cinema" class="page">
-                <input type="text" id="v-url" placeholder="YouTube URL"><button class="btn-blue" onclick="syncVideo()">SYNC</button>
+                <div style="display:flex; gap:5px;"><input type="text" id="v-url" placeholder="YouTube URL" style="flex:1; padding:10px;"><button class="btn-blue" onclick="syncVideo()">SYNC</button></div>
                 <div id="video-container" style="flex:1; background:#000; margin-top:10px; border-radius:8px;"></div>
             </div>
 
             <div id="tab-paint" class="page">
-                <input type="color" id="p-color" value="#1b5ead">
-                <canvas id="paint-canvas" style="background:#fff; border-radius:8px; flex:1; touch-action:none;"></canvas>
-                <button class="btn-blue" onclick="clearCanvas()">Очистить</button>
+                <div style="margin-bottom:5px;"><input type="color" id="p-color" value="#1b5ead"> <button class="btn-blue" onclick="clearCanvas()">Очистить</button></div>
+                <canvas id="paint-canvas" style="background:#fff; border-radius:8px; flex:1; touch-action:none; border:1px solid #ccc;"></canvas>
             </div>
 
             <div id="tab-css" class="page">
-                <textarea id="user-css" style="height:200px; width:100%;" placeholder="Твой CSS дизайн..."></textarea>
-                <button class="btn-blue" onclick="updateUserField('css', document.getElementById('user-css').value)">Применить</button>
+                <textarea id="user-css" style="height:200px; width:95%; padding:10px; border-radius:8px; border:1px solid #ccc;" placeholder="CSS..."></textarea>
+                <button class="btn-blue" style="margin-top:10px;" onclick="updateUserField('css', document.getElementById('user-css').value)">Сохранить дизайн</button>
             </div>
         </div>
     </div>
@@ -208,16 +187,18 @@
     const db = getFirestore(app);
     const rtdb = getDatabase(app);
 
+    // Agora Fixes
     const agoraAppId = "40203f7e50c449179511197a15998f48";
     let client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
     let localTracks = { audio: null, screen: null };
     let currentUser = null;
     let pmTarget = null;
-    let callStartTime = 0, callInterval = null;
+    let callTimerStart = 0, callInt = null;
 
     window.handleAuth = async () => {
         const login = document.getElementById('auth-login').value.trim().toLowerCase();
         const pass = document.getElementById('auth-pass').value.trim();
+        if(!login) return;
         const userDoc = await getDoc(doc(db, "users", login));
         if(userDoc.exists() && userDoc.data().pass === pass) loginSuccess(login, userDoc.data());
         else if(!userDoc.exists()) {
@@ -231,34 +212,23 @@
         currentUser = { nick, ...data };
         document.getElementById('auth-overlay').style.display = 'none';
         document.getElementById('display-nick').innerText = nick;
-        applySettings();
+        if(data.bg) document.body.style.backgroundImage = `url('${data.bg}')`;
+        if(data.ava) document.getElementById('view-ava').src = data.ava;
+        document.getElementById('custom-css-style').innerText = data.css || "";
         initApp();
         set(ref(rtdb, 'online/' + nick), true);
         onDisconnect(ref(rtdb, 'online/' + nick)).remove();
-        listenCalls();
+        listenIncoming();
     }
 
-    function applySettings() {
-        if(currentUser.bg) document.body.style.backgroundImage = `url('${currentUser.bg}')`;
-        if(currentUser.ava) document.getElementById('view-ava').src = currentUser.ava;
-        document.getElementById('custom-css-style').innerText = currentUser.css || "";
-        document.getElementById('user-css').value = currentUser.css || "";
-        renderFriends();
-    }
-
-    window.updateUserField = async (f, v) => {
-        await updateDoc(doc(db, "users", currentUser.nick), { [f]: v });
-        currentUser[f] = v; applySettings();
-    };
-
-    // --- CALL SYSTEM 2.0 (DISCORD STYLE) ---
-    function listenCalls() {
+    // --- CALLS FIX ---
+    function listenIncoming() {
         onSnapshot(doc(db, "calls", currentUser.nick), (snap) => {
-            const data = snap.data();
-            if(data && data.status === "ringing") {
-                document.getElementById('caller-name').innerText = data.from;
+            const d = snap.data();
+            if(d && d.status === "ringing") {
+                document.getElementById('caller-name').innerText = d.from;
                 document.getElementById('incoming-call-overlay').style.display = 'block';
-                document.getElementById('accept-btn').onclick = () => acceptCall(data.from, data.channel);
+                document.getElementById('accept-btn').onclick = () => acceptCall(d.from, d.channel);
             } else {
                 document.getElementById('incoming-call-overlay').style.display = 'none';
             }
@@ -268,19 +238,15 @@
     window.startCall = async (target) => {
         const channel = [currentUser.nick, target].sort().join("-");
         await setDoc(doc(db, "calls", target), { from: currentUser.nick, channel, status: "ringing" });
-        joinChannel(channel, target);
+        initAgora(channel);
     };
 
     async function acceptCall(from, channel) {
         await deleteDoc(doc(db, "calls", currentUser.nick));
-        joinChannel(channel, from);
+        initAgora(channel);
     }
 
-    window.rejectCall = async () => {
-        await deleteDoc(doc(db, "calls", currentUser.nick));
-    };
-
-    async function joinChannel(channel, partner) {
+    async function initAgora(channel) {
         document.getElementById('incoming-call-overlay').style.display = 'none';
         document.getElementById('dynamic-island').style.display = 'flex';
         
@@ -288,20 +254,25 @@
         localTracks.audio = await AgoraRTC.createMicrophoneAudioTrack();
         await client.publish(localTracks.audio);
         
-        callStartTime = Date.now();
-        callInterval = setInterval(updateCallTimer, 1000);
+        callTimerStart = Date.now();
+        callInt = setInterval(() => {
+            const sec = Math.floor((Date.now() - callTimerStart) / 1000);
+            const min = Math.floor(sec / 60);
+            document.getElementById('call-timer').innerText = `${String(min).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+        }, 1000);
     }
 
-    function updateCallTimer() {
-        const sec = Math.floor((Date.now() - callStartTime) / 1000);
-        document.getElementById('call-timer').innerText = new Date(sec * 1000).toISOString().substr(14, 5);
-    }
-
-    window.toggleMute = () => {
-        const m = localTracks.audio.muted;
-        localTracks.audio.setMuted(!m);
-        document.getElementById('mute-btn').innerText = !m ? "🔇" : "🎤";
-    };
+    client.on("user-published", async (user, mediaType) => {
+        await client.subscribe(user, mediaType);
+        if(mediaType === "audio") {
+            user.audioTrack.play();
+        }
+        if(mediaType === "video") {
+            const vBox = document.getElementById('remote-video-container');
+            vBox.style.display = 'block';
+            user.videoTrack.play(vBox);
+        }
+    });
 
     window.toggleScreen = async () => {
         if(!localTracks.screen) {
@@ -317,27 +288,27 @@
         }
     };
 
-    window.endCall = async () => {
-        clearInterval(callInterval);
-        for(let track in localTracks) if(localTracks[track]) { localTracks[track].stop(); localTracks[track].close(); }
-        await client.leave();
-        document.getElementById('dynamic-island').style.display = 'none';
+    window.toggleMute = () => {
+        const isMuted = localTracks.audio.muted;
+        localTracks.audio.setMuted(!isMuted);
+        document.getElementById('mute-btn').innerText = !isMuted ? "🔇" : "🎤";
     };
 
-    client.on("user-published", async (user, mediaType) => {
-        await client.subscribe(user, mediaType);
-        if(mediaType === "audio") user.audioTrack.play();
-        if(mediaType === "video") {
-            document.getElementById('remote-video-dock').style.display = 'block';
-            user.videoTrack.play('remote-video-dock');
-        }
-    });
+    window.endCall = async () => {
+        clearInterval(callInt);
+        for(let t in localTracks) if(localTracks[t]) { localTracks[t].stop(); localTracks[t].close(); }
+        await client.leave();
+        document.getElementById('dynamic-island').style.display = 'none';
+        document.getElementById('remote-video-container').style.display = 'none';
+    };
 
-    // --- FIREBASE CORE (RETAINED) ---
+    window.rejectCall = async () => await deleteDoc(doc(db, "calls", currentUser.nick));
+
+    // --- CORE FIREBASE ---
     function initApp() {
         onSnapshot(collection(db, "users"), s => document.getElementById('stat-total').innerText = s.size);
         onValue(ref(rtdb, 'online'), s => document.getElementById('stat-online').innerText = s.exists() ? Object.keys(s.val()).length : 0);
-
+        
         onSnapshot(query(collection(db, "messages"), orderBy("time", "asc"), limit(60)), snap => {
             const box = document.getElementById('messages'); box.innerHTML = "";
             document.getElementById('stat-msgs').innerText = snap.size;
@@ -373,6 +344,7 @@
                 d.points.forEach(p => ctx.lineTo(p.x, p.y)); ctx.stroke();
             }
         });
+        renderFriends();
     }
 
     window.sendMsg = async () => {
@@ -393,12 +365,12 @@
         if(url) update(ref(rtdb, 'sync'), { video: { url, ts: serverTimestamp() } });
     };
 
-    window.renderFriends = () => {
+    function renderFriends() {
         const list = document.getElementById('friends-page-list'); list.innerHTML = "";
         (currentUser.friends || []).forEach(f => {
             list.innerHTML += `<div class="friend-item"><b>${f}</b> <div><button class="btn-blue" onclick="setPM('${f}')">ЛС</button><button class="btn-blue" style="background:#4CAF50" onclick="startCall('${f}')">📞</button></div></div>`;
         });
-    };
+    }
 
     window.addFriend = async (n) => {
         if(n === currentUser.nick) return;
@@ -414,7 +386,7 @@
     const ctx = canvas.getContext('2d');
     let drawing = false, batch = [];
     const getPos = (e) => { const r = canvas.getBoundingClientRect(); const cx = e.touches ? e.touches[0].clientX : e.clientX; const cy = e.touches ? e.touches[0].clientY : e.clientY; return { x: cx - r.left, y: cy - r.top }; };
-    canvas.addEventListener('mousedown', e => { drawing = true; batch = [getPos(e)]; });
+    canvas.addEventListener('mousedown', e => { drawing = true; batch = [getPos(e)]; ctx.beginPath(); ctx.moveTo(batch[0].x, batch[0].y); });
     canvas.addEventListener('mousemove', e => { if(!drawing) return; const p = getPos(e); batch.push(p); ctx.strokeStyle = document.getElementById('p-color').value; ctx.lineTo(p.x, p.y); ctx.stroke(); });
     window.addEventListener('mouseup', () => { if(!drawing) return; drawing = false; update(ref(rtdb, 'sync'), { paint: { points: batch, color: document.getElementById('p-color').value, ts: serverTimestamp() } }); });
     window.clearCanvas = () => set(ref(rtdb, 'sync/paint'), { action: 'clear', ts: serverTimestamp() });
@@ -424,6 +396,11 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         if(id === 'tab-paint') { canvas.width = canvas.parentElement.offsetWidth; canvas.height = 400; }
+    };
+
+    window.updateUserField = async (f, v) => {
+        await updateDoc(doc(db, "users", currentUser.nick), { [f]: v });
+        currentUser[f] = v; loginSuccess(currentUser.nick, currentUser);
     };
 
     setInterval(() => { document.getElementById('top-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
