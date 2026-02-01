@@ -7,7 +7,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://via.placeholder.com/192">
     
-    <title>FreeNet v7.6 - Pro Audio & Screen</title>
+    <title>FreeNet v7.7 - Full Aero & Agora</title>
+    
+    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.18.0.js"></script>
+
     <style id="custom-css-style"></style>
     <style>
         :root {
@@ -19,15 +22,13 @@
 
         body {
             background: #008080 url('https://wallpaperaccess.com/full/1155027.jpg') no-repeat center center fixed;
-            background-size: cover;
-            font-family: 'Segoe UI', sans-serif;
+            background-size: cover; font-family: 'Segoe UI', sans-serif;
             margin: 0; padding: 20px; color: #fff; min-height: 100vh;
             -webkit-tap-highlight-color: transparent;
         }
 
         .glass-panel {
-            background: var(--aero-bg);
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            background: var(--aero-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border: 1px solid var(--aero-border); border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 0 10px rgba(255,255,255,0.2);
             color: #000;
@@ -102,52 +103,45 @@
             color: #fff; font-weight: bold; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
 
-        .call-btn { background: #4CAF50; color: #fff; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; margin-left: 3px; }
-
-        /* Modern Call Overlay */
-        #call-ui {
-            display: none; position: fixed; bottom: 30px; right: 30px; width: 320px;
-            z-index: 30000; padding: 20px; text-align: center;
+        /* Call UI */
+        #call-ui-layer {
+            display: none; position: fixed; bottom: 30px; right: 30px; width: 280px; 
+            padding: 20px; z-index: 30000; text-align: center; border: 2px solid var(--win-blue);
         }
-        .call-ctrl { display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
-        .ctrl-btn { width: 45px; height: 45px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-        .hangup { background: #ff4757; color: white; }
-        .toggle { background: #2f3542; color: white; }
-
-        #screen-share-view { width: 100%; height: 180px; background: #000; border-radius: 8px; margin-top: 10px; display: none; overflow: hidden; }
+        #remote-player { width: 100%; height: 150px; background: #000; border-radius: 8px; margin-top: 10px; display: none; }
 
         @media (max-width: 768px) {
             body { padding: 0; }
             .window { height: 100vh; border-radius: 0; }
-            .main-layout { flex-direction: column; }
+            .main-layout { flex-direction: column; overflow-y: auto; }
             .sidebar { width: 100%; }
         }
     </style>
 </head>
 <body>
 
-<div id="call-ui" class="glass-panel">
-    <div id="call-status">Связь установлена...</div>
-    <div id="screen-share-view"></div>
-    <div class="call-ctrl">
-        <button class="ctrl-btn toggle" id="mute-btn" onclick="toggleMic()">🎤</button>
-        <button class="ctrl-btn toggle" id="screen-btn" onclick="toggleScreen()">🖥️</button>
-        <button class="ctrl-btn hangup" onclick="endCall()">📞</button>
+<div id="call-ui-layer" class="glass-panel">
+    <div id="call-info" style="font-weight: bold; margin-bottom: 10px;">Активный звонок</div>
+    <div id="remote-player"></div>
+    <div style="display: flex; gap: 5px; justify-content: center; margin-top: 10px;">
+        <button class="btn-blue" style="background: #e74c3c;" onclick="endCall()">Завершить</button>
+        <button class="btn-blue" id="share-btn" onclick="toggleScreen()">Экран</button>
     </div>
 </div>
 
 <div id="auth-overlay">
     <div class="auth-window glass-panel" style="width:300px; padding:20px;">
-        <h2 style="margin-top:0; color:var(--win-blue)">FreeNet 7.6</h2>
-        <input type="text" id="auth-login" placeholder="Ваш ник" style="width:100%">
-        <input type="password" id="auth-pass" placeholder="Пароль" style="width:100%">
-        <button class="btn-blue" onclick="handleAuth()" style="width:100%">ВОЙТИ / СОЗДАТЬ</button>
+        <h2 style="margin-top:0; color:var(--win-blue)">FreeNet 7.7</h2>
+        <input type="text" id="auth-login" placeholder="Логин">
+        <input type="password" id="auth-pass" placeholder="Пароль">
+        <button class="btn-blue" onclick="handleAuth()" style="width:100%">ВОЙТИ</button>
+        <p id="auth-error" style="color:maroon; font-size:12px;"></p>
     </div>
 </div>
 
 <div class="window glass-panel">
     <div class="title-bar">
-        <span>FreeNet Aero v7.6</span>
+        <span>FreeNet Aero v7.7</span>
         <span id="top-clock">00:00:00</span>
     </div>
 
@@ -155,17 +149,15 @@
         <div class="sidebar">
             <div class="profile-card glass-panel">
                 <img id="view-ava" src="https://via.placeholder.com/100">
-                <h3 id="display-nick" style="margin:10px 0">...</h3>
-                <div style="font-size:10px; display:flex; flex-direction:column; gap:5px;">
-                    <input type="text" id="sidebar-ava" placeholder="URL Аватарки" onchange="updateUserField('ava', this.value)">
-                    <input type="text" id="sidebar-bg" placeholder="URL Фона" onchange="updateUserField('bg', this.value)">
-                </div>
+                <h3 id="display-nick">...</h3>
+                <input type="text" id="sidebar-ava" placeholder="Ava URL" onchange="updateUserField('ava', this.value)">
+                <input type="text" id="sidebar-bg" placeholder="BG URL" onchange="updateUserField('bg', this.value)">
             </div>
             <div class="stats-panel glass-panel">
-                • Всего: <span id="stat-total">0</span><br>
-                • В сети: <span id="stat-online">0</span><br>
-                • Сообщений: <span id="stat-msgs">0</span>
-                <button onclick="logout()" style="margin-top:10px; width:100%;">Выход</button>
+                В сети: <span id="stat-online">0</span><br>
+                Всего: <span id="stat-total">0</span><br>
+                Мсг: <span id="stat-msgs">0</span>
+                <button onclick="logout()" style="width:100%; margin-top:5px;">Выход</button>
             </div>
         </div>
 
@@ -181,13 +173,8 @@
 
             <div id="tab-chat" class="page active">
                 <div id="messages"></div>
-                <div id="pm-info" style="display:none; padding:5px; font-size:11px; background:rgba(27,94,173,0.1);">
-                    ЛС для: <b id="pm-target-name"></b> <span onclick="cancelPM()" style="cursor:pointer; color:red;">[X]</span>
-                </div>
-                <div class="controls">
-                    <input type="text" id="msg-input" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') sendMsg()">
-                    <button class="btn-blue" onclick="sendMsg()">></button>
-                </div>
+                <div id="pm-info" style="display:none; font-size:11px; color:var(--win-blue); padding:5px;">Приватно: <b id="pm-target-name"></b> <span onclick="cancelPM()">[X]</span></div>
+                <div class="controls"><input type="text" id="msg-input" onkeypress="if(event.key==='Enter') sendMsg()"><button class="btn-blue" onclick="sendMsg()">></button></div>
             </div>
 
             <div id="tab-friends" class="page">
@@ -201,18 +188,19 @@
             </div>
 
             <div id="tab-cinema" class="page">
-                <input type="text" id="v-url" placeholder="YouTube URL"><button class="btn-blue" onclick="syncVideo()">SYNC</button>
+                <input type="text" id="v-url" placeholder="YouTube Link"><button class="btn-blue" onclick="syncVideo()">SYNC</button>
                 <div id="video-container" style="flex:1; background:#000; margin-top:10px;"></div>
             </div>
 
             <div id="tab-paint" class="page">
-                <div class="controls"><input type="color" id="p-color"><button class="btn-blue" onclick="clearCanvas()">Clear</button></div>
-                <canvas id="paint-canvas" style="background:#fff; border-radius:8px; touch-action:none;"></canvas>
+                <input type="color" id="p-color" value="#1b5ead">
+                <canvas id="paint-canvas" style="background:#fff; flex:1; border-radius:8px; touch-action:none;"></canvas>
+                <button class="btn-blue" onclick="clearCanvas()">Очистить</button>
             </div>
 
             <div id="tab-css" class="page">
-                <textarea id="user-css" style="width:100%; height:150px;"></textarea>
-                <button class="btn-blue" onclick="updateUserField('css', document.getElementById('user-css').value)">Сохранить</button>
+                <textarea id="user-css" style="height:200px;"></textarea>
+                <button class="btn-blue" onclick="updateUserField('css', document.getElementById('user-css').value)">Применить</button>
             </div>
         </div>
     </div>
@@ -222,9 +210,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, orderBy, limit, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getDatabase, ref, set, onValue, onDisconnect, serverTimestamp, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-    // Скрипт для звонков (чистый WebRTC через PeerJS для удобства)
-    import "https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBDrzNL3_kaSCU38Oac9-7CarZgqRfc9pU",
@@ -237,8 +222,13 @@
     const db = getFirestore(app);
     const rtdb = getDatabase(app);
 
-    let currentUser = null, pmTarget = null;
-    let peer = null, currentCall = null, localStream = null;
+    const agoraAppId = "40203f7e50c449179511197a15998f48";
+    let agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+    let localTracks = { audioTrack: null, videoTrack: null, screenTrack: null };
+    let isSharing = false;
+
+    let currentUser = null;
+    let pmTarget = null;
 
     window.handleAuth = async () => {
         const login = document.getElementById('auth-login').value.trim().toLowerCase();
@@ -247,7 +237,8 @@
         if(userDoc.exists() && userDoc.data().pass === pass) loginSuccess(login, userDoc.data());
         else if(!userDoc.exists()) {
             const newUser = { pass, ava: "", bg: "", css: "", nick: login, friends: [] };
-            await setDoc(doc(db, "users", login), newUser); loginSuccess(login, newUser);
+            await setDoc(doc(db, "users", login), newUser);
+            loginSuccess(login, newUser);
         }
     };
 
@@ -255,146 +246,110 @@
         currentUser = { nick, ...data };
         document.getElementById('auth-overlay').style.display = 'none';
         document.getElementById('display-nick').innerText = nick;
-        applyUserSettings(); initApp();
-        initPeer();
+        applySettings();
+        initApp();
         set(ref(rtdb, 'online/' + nick), true);
         onDisconnect(ref(rtdb, 'online/' + nick)).remove();
     }
 
-    // --- ЗВОНКИ LOGIC ---
-    function initPeer() {
-        peer = new Peer(currentUser.nick);
-        peer.on('call', async (call) => {
-            if(confirm("Входящий звонок от " + call.peer + ". Ответить?")) {
-                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                call.answer(localStream);
-                handleCall(call);
-            }
-        });
-    }
-
-    window.startCall = async (target) => {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const call = peer.call(target, localStream);
-        handleCall(call);
-    };
-
-    function handleCall(call) {
-        currentCall = call;
-        document.getElementById('call-ui').style.display = 'block';
-        call.on('stream', (remoteStream) => {
-            const audio = new Audio();
-            audio.srcObject = remoteStream;
-            audio.play();
-        });
-        call.on('close', endCall);
-    }
-
-    window.endCall = () => {
-        if(currentCall) currentCall.close();
-        if(localStream) localStream.getTracks().forEach(t => t.stop());
-        document.getElementById('call-ui').style.display = 'none';
-    };
-
-    window.toggleMic = () => {
-        const audioTrack = localStream.getAudioTracks()[0];
-        audioTrack.enabled = !audioTrack.enabled;
-        document.getElementById('mute-btn').innerText = audioTrack.enabled ? "🎤" : "🔇";
-    };
-
-    window.toggleScreen = async () => {
-        const btn = document.getElementById('screen-btn');
-        const view = document.getElementById('screen-share-view');
-        if (btn.innerText === "🖥️") {
-            const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-            const video = document.createElement('video');
-            video.srcObject = screenStream; video.autoplay = true; video.style.width = "100%";
-            view.innerHTML = ""; view.appendChild(video); view.style.display = "block";
-            btn.innerText = "❌";
-            // В реальном WebRTC тут нужна замена трека в peer-to-peer, упрощено для UI
-        } else {
-            view.style.display = "none"; btn.innerText = "🖥️";
-        }
-    };
-
-    // --- СТАНДАРТНЫЙ ФУНКЦИОНАЛ ---
-    function applyUserSettings() {
+    function applySettings() {
         if(currentUser.bg) document.body.style.backgroundImage = `url('${currentUser.bg}')`;
         if(currentUser.ava) document.getElementById('view-ava').src = currentUser.ava;
-        document.getElementById('user-css').value = currentUser.css || "";
         document.getElementById('custom-css-style').innerText = currentUser.css || "";
         renderFriends();
     }
 
-    function renderFriends() {
-        const list = document.getElementById('friends-page-list');
-        list.innerHTML = "";
-        (currentUser.friends || []).forEach(f => {
-            list.innerHTML += `<div class="friend-item"><b>${f}</b><div>
-                <button class="call-btn" onclick="setPM('${f}'); switchTab('tab-chat')">ЛС</button>
-                <button class="call-btn" style="background:#2196F3" onclick="startCall('${f}')">📞 Звонок</button>
-            </div></div>`;
-        });
-    }
+    window.updateUserField = async (f, v) => {
+        await updateDoc(doc(db, "users", currentUser.nick), { [f]: v });
+        currentUser[f] = v; applySettings();
+    };
 
-    window.addFriend = async (nick) => {
-        if(nick === currentUser.nick) return;
-        let friends = currentUser.friends || [];
-        if(!friends.includes(nick)) {
-            friends.push(nick);
-            await updateDoc(doc(db, "users", currentUser.nick), { friends });
-            currentUser.friends = friends; renderFriends();
+    // --- AGORA CALL ---
+    window.startCall = async (target) => {
+        const channel = [currentUser.nick, target].sort().join("-");
+        document.getElementById('call-ui-layer').style.display = 'block';
+        await agoraClient.join(agoraAppId, channel, null, currentUser.nick);
+        localTracks.audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+        await agoraClient.publish(localTracks.audioTrack);
+        addDoc(collection(db, "messages"), { nick: currentUser.nick, to: target, text: `📞 Звонок! <button onclick="startCall('${currentUser.nick}')">ОТВЕТИТЬ</button>`, time: Date.now() });
+    };
+
+    window.toggleScreen = async () => {
+        if(!isSharing) {
+            localTracks.screenTrack = await AgoraRTC.createScreenVideoTrack();
+            await agoraClient.unpublish(localTracks.audioTrack); 
+            await agoraClient.publish([localTracks.screenTrack, localTracks.audioTrack]);
+            isSharing = true; document.getElementById('share-btn').innerText = "Стоп";
+        } else {
+            await agoraClient.unpublish(localTracks.screenTrack); localTracks.screenTrack.stop();
+            isSharing = false; document.getElementById('share-btn').innerText = "Экран";
         }
     };
 
+    agoraClient.on("user-published", async (user, mediaType) => {
+        await agoraClient.subscribe(user, mediaType);
+        if (mediaType === "audio") user.audioTrack.play();
+        if (mediaType === "video") { document.getElementById('remote-player').style.display = 'block'; user.videoTrack.play('remote-player'); }
+    });
+
+    window.endCall = async () => {
+        for (let t in localTracks) { if(localTracks[t]) { localTracks[t].stop(); localTracks[t].close(); } }
+        await agoraClient.leave(); document.getElementById('call-ui-layer').style.display = 'none';
+    };
+
+    // --- FIREBASE FULL ---
     function initApp() {
         onSnapshot(collection(db, "users"), s => document.getElementById('stat-total').innerText = s.size);
         onValue(ref(rtdb, 'online'), s => document.getElementById('stat-online').innerText = s.exists() ? Object.keys(s.val()).length : 0);
-        
-        onSnapshot(query(collection(db, "messages"), orderBy("time", "asc"), limit(100)), snap => {
+
+        onSnapshot(query(collection(db, "messages"), orderBy("time", "asc"), limit(70)), snap => {
             const box = document.getElementById('messages'); box.innerHTML = "";
+            document.getElementById('stat-msgs').innerText = snap.size;
             snap.forEach(d => {
                 const m = d.data();
                 if(!m.to || m.to === currentUser.nick || m.nick === currentUser.nick) {
-                    box.innerHTML += `<div style="padding:4px 0"><small>${new Date(m.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</small> <b style="cursor:pointer; color:var(--win-blue)" onclick="addFriend('${m.nick}')">${m.nick}</b>: ${m.text}</div>`;
+                    box.innerHTML += `<div><b style="cursor:pointer" onclick="addFriend('${m.nick}')">${m.nick}</b>: ${m.text}</div>`;
                 }
             });
             box.scrollTop = box.scrollHeight;
         });
 
-        onSnapshot(query(collection(db, "board"), orderBy("time", "desc"), limit(20)), snap => {
+        onSnapshot(query(collection(db, "board"), orderBy("time", "desc"), limit(20)), s => {
             const box = document.getElementById('board-messages'); box.innerHTML = "";
-            snap.forEach(d => box.innerHTML += `<div style="padding:10px; border-bottom:1px solid #ddd"><b>${d.data().nick}:</b> ${d.data().text}</div>`);
+            s.forEach(d => box.innerHTML += `<div><b>${d.data().nick}:</b> ${d.data().text}</div>`);
         });
 
-        onValue(ref(rtdb, 'sync/video'), snap => {
-            const v = snap.val(); if(v?.url) {
+        onValue(ref(rtdb, 'sync/video'), s => {
+            const v = s.val(); if(v?.url) {
                 const id = v.url.match(/(?:v=|be\/|embed\/)([a-zA-Z0-9_-]{11})/);
                 if(id) document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id[1]}?autoplay=1" frameborder="0"></iframe>`;
             }
         });
 
-        const canvas = document.getElementById('paint-canvas'); const ctx = canvas.getContext('2d');
-        onValue(ref(rtdb, 'sync/paint'), snap => {
-            const data = snap.val(); if(!data) return;
-            if(data.action === 'clear') ctx.clearRect(0,0,canvas.width,canvas.height);
-            else if (data.points) {
-                ctx.strokeStyle = data.color; ctx.lineWidth = 2; ctx.lineCap='round'; ctx.beginPath();
-                ctx.moveTo(data.points[0].x, data.points[0].y); data.points.forEach(p => ctx.lineTo(p.x, p.y)); ctx.stroke();
+        const canvas = document.getElementById('paint-canvas');
+        const ctx = canvas.getContext('2d');
+        onValue(ref(rtdb, 'sync/paint'), s => {
+            const d = s.val(); if(!d) return;
+            if(d.action === 'clear') ctx.clearRect(0,0,canvas.width,canvas.height);
+            else if(d.points) {
+                ctx.strokeStyle = d.color; ctx.lineWidth = 2; ctx.beginPath();
+                ctx.moveTo(d.points[0].x, d.points[0].y);
+                d.points.forEach(p => ctx.lineTo(p.x, p.y)); ctx.stroke();
             }
         });
     }
 
     window.sendMsg = async () => {
-        const inp = document.getElementById('msg-input'); if(!inp.value.trim()) return;
-        const msg = { nick: currentUser.nick, text: inp.value, time: Date.now() };
-        if(pmTarget) msg.to = pmTarget;
-        await addDoc(collection(db, "messages"), msg); inp.value = "";
+        const inp = document.getElementById('msg-input'); if(!inp.value) return;
+        const m = { nick: currentUser.nick, text: inp.value, time: Date.now() };
+        if(pmTarget) m.to = pmTarget;
+        await addDoc(collection(db, "messages"), m); inp.value = "";
     };
 
     window.postToBoard = async () => {
-        const inp = document.getElementById('board-input'); if(!inp.value.trim()) return;
-        await addDoc(collection(db, "board"), { nick: currentUser.nick, text: inp.value, time: Date.now() }); inp.value = "";
+        const inp = document.getElementById('board-input'); if(!inp.value) return;
+        await addDoc(collection(db, "board"), { nick: currentUser.nick, text: inp.value, time: Date.now() });
+        inp.value = "";
     };
 
     window.syncVideo = () => {
@@ -402,34 +357,39 @@
         if(url) update(ref(rtdb, 'sync'), { video: { url, ts: serverTimestamp() } });
     };
 
-    // Paint Logic
-    const canvas = document.getElementById('paint-canvas'); const ctx = canvas.getContext('2d');
-    let isDrawing = false, currentBatch = [];
-    const getPos = (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const cx = e.touches ? e.touches[0].clientX : e.clientX;
-        const cy = e.touches ? e.touches[0].clientY : e.clientY;
-        return { x: cx - rect.left, y: cy - rect.top };
+    window.renderFriends = () => {
+        const list = document.getElementById('friends-page-list'); list.innerHTML = "";
+        (currentUser.friends || []).forEach(f => {
+            list.innerHTML += `<div class="friend-item"><b>${f}</b> <div><button class="call-btn" onclick="setPM('${f}')">ЛС</button><button class="call-btn video-btn" onclick="startCall('${f}')">Звонок</button></div></div>`;
+        });
     };
-    canvas.addEventListener('mousedown', (e) => { isDrawing = true; currentBatch = [getPos(e)]; });
-    canvas.addEventListener('mousemove', (e) => {
-        if(!isDrawing) return; const p = getPos(e); currentBatch.push(p);
-        ctx.strokeStyle = document.getElementById('p-color').value; ctx.lineTo(p.x, p.y); ctx.stroke();
-    });
-    window.addEventListener('mouseup', () => {
-        if(!isDrawing) return; isDrawing = false;
-        update(ref(rtdb, 'sync'), { paint: { points: currentBatch, color: document.getElementById('p-color').value, ts: serverTimestamp() } });
-    });
-    window.clearCanvas = () => set(ref(rtdb, 'sync/paint'), { action: 'clear', ts: serverTimestamp() });
 
-    window.updateUserField = async (f, v) => { await updateDoc(doc(db, "users", currentUser.nick), {[f]:v}); currentUser[f]=v; applyUserSettings(); };
-    window.setPM = (n) => { pmTarget=n; document.getElementById('pm-info').style.display='block'; document.getElementById('pm-target-name').innerText=n; };
-    window.cancelPM = () => { pmTarget=null; document.getElementById('pm-info').style.display='none'; };
+    window.addFriend = async (n) => {
+        if(n === currentUser.nick) return;
+        let fs = currentUser.friends || [];
+        if(!fs.includes(n)) { fs.push(n); await updateDoc(doc(db, "users", currentUser.nick), { friends: fs }); currentUser.friends = fs; renderFriends(); }
+    };
+
+    window.setPM = (n) => { pmTarget = n; document.getElementById('pm-info').style.display='block'; document.getElementById('pm-target-name').innerText = n; switchTab('tab-chat'); };
+    window.cancelPM = () => { pmTarget = null; document.getElementById('pm-info').style.display='none'; };
+
+    // Paint Logic
+    const canvas = document.getElementById('paint-canvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false, batch = [];
+    const getPos = (e) => { const r = canvas.getBoundingClientRect(); const cx = e.touches ? e.touches[0].clientX : e.clientX; const cy = e.touches ? e.touches[0].clientY : e.clientY; return { x: cx - r.left, y: cy - r.top }; };
+    canvas.addEventListener('mousedown', e => { drawing = true; batch = [getPos(e)]; });
+    canvas.addEventListener('mousemove', e => { if(!drawing) return; const p = getPos(e); batch.push(p); ctx.strokeStyle = document.getElementById('p-color').value; ctx.lineTo(p.x, p.y); ctx.stroke(); });
+    window.addEventListener('mouseup', () => { if(!drawing) return; drawing = false; update(ref(rtdb, 'sync'), { paint: { points: batch, color: document.getElementById('p-color').value, ts: serverTimestamp() } }); });
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; batch = [getPos(e)]; });
+    canvas.addEventListener('touchend', () => { if(drawing) { drawing = false; update(ref(rtdb, 'sync'), { paint: { points: batch, color: document.getElementById('p-color').value, ts: serverTimestamp() } }); } });
+    
+    window.clearCanvas = () => set(ref(rtdb, 'sync/paint'), { action: 'clear', ts: serverTimestamp() });
+    
     window.switchTab = (id) => {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        event.target.classList.add('active');
         if(id === 'tab-paint') { canvas.width = canvas.offsetWidth; canvas.height = 400; }
     };
 
