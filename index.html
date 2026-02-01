@@ -33,10 +33,24 @@
             color: #000;
         }
 
+        /* ОБНОВЛЕННЫЙ ЭКРАН ВХОДА */
         #auth-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #004e92, #000428);
-            z-index: 10000; display: flex; align-items: center; justify-content: center;
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.3); /* Затемнение */
+            backdrop-filter: blur(8px); /* Размытие фона за окном */
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 10000; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+        }
+
+        .auth-window {
+            width: 320px;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.4);
         }
 
         .window {
@@ -113,12 +127,12 @@
 <body>
 
 <div id="auth-overlay">
-    <div class="auth-window glass-panel" style="width:300px; padding:20px;">
+    <div class="auth-window glass-panel">
         <h2 style="margin-top:0; color:var(--win-blue)">FreeNet 7</h2>
-        <input type="text" id="auth-login" placeholder="Ваш ник" style="width:100%">
-        <input type="password" id="auth-pass" placeholder="Пароль" style="width:100%">
-        <button class="btn-blue" onclick="handleAuth()" style="width:100%">ВОЙТИ / СОЗДАТЬ</button>
-        <p id="auth-error" style="color:maroon; font-size:12px;"></p>
+        <input type="text" id="auth-login" placeholder="Ваш ник" style="width:100%; box-sizing: border-box;">
+        <input type="password" id="auth-pass" placeholder="Пароль" style="width:100%; box-sizing: border-box;">
+        <button class="btn-blue" onclick="handleAuth()" style="width:100%; margin-top: 10px;">ВОЙТИ / СОЗДАТЬ</button>
+        <p id="auth-error" style="color:maroon; font-size:12px; margin-bottom: 0;"></p>
     </div>
 </div>
 
@@ -265,12 +279,10 @@
     };
 
     function initApp() {
-        // Статистика
         onSnapshot(collection(db, "users"), snap => document.getElementById('stat-total').innerText = snap.size);
         onSnapshot(collection(db, "messages"), snap => document.getElementById('stat-msgs').innerText = snap.size);
         onValue(ref(rtdb, 'online'), snap => document.getElementById('stat-online').innerText = snap.exists() ? Object.keys(snap.val()).length : 0);
 
-        // Чат
         const q = query(collection(db, "messages"), orderBy("time", "asc"), limit(100));
         onSnapshot(q, snap => {
             const box = document.getElementById('messages');
@@ -282,14 +294,12 @@
             box.scrollTop = box.scrollHeight;
         });
 
-        // Доска
         onSnapshot(query(collection(db, "board"), orderBy("time", "desc"), limit(20)), snap => {
             const box = document.getElementById('board-messages');
             box.innerHTML = "";
             snap.forEach(d => box.innerHTML += `<div style="padding:8px; border-bottom:1px solid #ddd"><b>${d.data().nick}:</b> ${d.data().text}</div>`);
         });
 
-        // ВИДЕО СИНХРОН (Исправлено)
         onValue(ref(rtdb, 'sync/video'), snap => {
             const v = snap.val();
             if(v && v.url) {
@@ -298,7 +308,6 @@
             }
         });
 
-        // РИСОВАЛКА (Исправлено)
         const canvas = document.getElementById('paint-canvas');
         const ctx = canvas.getContext('2d');
         onValue(ref(rtdb, 'sync/paint'), snap => {
@@ -338,7 +347,6 @@
         if(url) update(ref(rtdb, 'sync'), { video: { url: url, ts: serverTimestamp() } });
     };
 
-    // --- ЛОГИКА РИСОВАНИЯ (Whereby-style) ---
     const canvas = document.getElementById('paint-canvas');
     const ctx = canvas.getContext('2d');
     let isDrawing = false;
@@ -360,8 +368,6 @@
         if(!isDrawing) return;
         const pos = getPos(e);
         currentBatch.push(pos);
-        
-        // Локальная отрисовка для мгновенного отклика
         ctx.strokeStyle = document.getElementById('p-color').value;
         ctx.lineWidth = 2;
         ctx.lineCap = 'round';
@@ -372,7 +378,6 @@
     const stopDrawing = () => {
         if(!isDrawing) return;
         isDrawing = false;
-        // Отправляем всю линию целиком одним пакетом
         update(ref(rtdb, 'sync'), { 
             paint: { 
                 points: currentBatch, 
@@ -405,4 +410,3 @@
 </script>
 </body>
 </html>
-
