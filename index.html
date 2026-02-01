@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FreeNet v7.1 - Aero Sync Fixed</title>
+    <title>FreeNet v7.2 - Aero Sync Fixed</title>
     <style id="custom-css-style"></style>
     <style>
         :root {
@@ -124,7 +124,7 @@
 
 <div class="window glass-panel">
     <div class="title-bar">
-        <span>FreeNet Aero v7.1</span>
+        <span>FreeNet Aero v7.2</span>
         <span id="top-clock">00:00:00</span>
     </div>
 
@@ -186,7 +186,7 @@
                     <input type="color" id="p-color" value="#004e92">
                     <button class="btn-blue" onclick="clearCanvas()">Очистить всем</button>
                 </div>
-                <canvas id="paint-canvas" style="background:#fff; border-radius:8px; touch-action:none;"></canvas>
+                <canvas id="paint-canvas" style="background:#fff; border-radius:8px; touch-action:none; cursor: crosshair;"></canvas>
             </div>
 
             <div id="tab-css" class="page">
@@ -202,8 +202,8 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, orderBy, limit, addDoc, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getDatabase, ref, set, onValue, push, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, orderBy, limit, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getDatabase, ref, set, onValue, onDisconnect, serverTimestamp, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBDrzNL3_kaSCU38Oac9-7CarZgqRfc9pU",
@@ -245,13 +245,11 @@
         document.getElementById('sidebar-bg').value = data.bg || "";
         document.getElementById('user-css').value = data.css || "";
         
-        const onlineRef = ref(rtdb, 'online/' + nick);
-        set(onlineRef, true);
-        onDisconnect(onlineRef).remove();
+        set(ref(rtdb, 'online/' + nick), true);
+        onDisconnect(ref(rtdb, 'online/' + nick)).remove();
 
         applyUserSettings();
         initApp();
-        updateGlobalStats();
     }
 
     function applyUserSettings() {
@@ -266,60 +264,56 @@
         applyUserSettings();
     };
 
-    async function updateGlobalStats() {
-        onSnapshot(collection(db, "users"), (snap) => { document.getElementById('stat-total').innerText = snap.size; });
-        onSnapshot(collection(db, "messages"), (snap) => { document.getElementById('stat-msgs').innerText = snap.size; });
-        onValue(ref(rtdb, 'online'), (snap) => { document.getElementById('stat-online').innerText = snap.exists() ? Object.keys(snap.val()).length : 0; });
-    }
-
     function initApp() {
+        // Статистика
+        onSnapshot(collection(db, "users"), snap => document.getElementById('stat-total').innerText = snap.size);
+        onSnapshot(collection(db, "messages"), snap => document.getElementById('stat-msgs').innerText = snap.size);
+        onValue(ref(rtdb, 'online'), snap => document.getElementById('stat-online').innerText = snap.exists() ? Object.keys(snap.val()).length : 0);
+
+        // Чат
         const q = query(collection(db, "messages"), orderBy("time", "asc"), limit(100));
-        onSnapshot(q, (snap) => {
+        onSnapshot(q, snap => {
             const box = document.getElementById('messages');
             box.innerHTML = "";
             snap.forEach(d => {
                 const m = d.data();
-                const div = document.createElement('div');
-                div.innerHTML = `<span style="opacity:0.5; font-size:10px;">${new Date(m.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span> <b style="color:var(--win-blue)">${m.nick}:</b> ${m.text}`;
-                box.appendChild(div);
+                box.innerHTML += `<div style="padding:4px 0"><span style="opacity:0.5; font-size:10px;">${new Date(m.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span> <b style="color:var(--win-blue)">${m.nick}:</b> ${m.text}</div>`;
             });
             box.scrollTop = box.scrollHeight;
         });
 
-        const qB = query(collection(db, "board"), orderBy("time", "desc"), limit(20));
-        onSnapshot(qB, (snap) => {
+        // Доска
+        onSnapshot(query(collection(db, "board"), orderBy("time", "desc"), limit(20)), snap => {
             const box = document.getElementById('board-messages');
             box.innerHTML = "";
-            snap.forEach(d => {
-                const m = d.data();
-                box.innerHTML += `<div style="padding:10px; border-bottom:1px solid #ddd"><b>${m.nick}:</b> ${m.text}</div>`;
-            });
+            snap.forEach(d => box.innerHTML += `<div style="padding:8px; border-bottom:1px solid #ddd"><b>${d.data().nick}:</b> ${d.data().text}</div>`);
         });
 
-        // СИНХРОНИЗАЦИЯ ВИДЕО
-        onValue(ref(rtdb, 'video/current'), (snap) => {
-            const vData = snap.val();
-            if(vData && vData.url) {
-                const id = vData.url.match(/(?:v=|be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+        // ВИДЕО СИНХРОН (Исправлено)
+        onValue(ref(rtdb, 'sync/video'), snap => {
+            const v = snap.val();
+            if(v && v.url) {
+                const id = v.url.match(/(?:v=|be\/|embed\/)([a-zA-Z0-9_-]{11})/);
                 if(id) document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id[1]}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
             }
         });
 
-        // СИНХРОНИЗАЦИЯ РИСОВАНИЯ
+        // РИСОВАЛКА (Исправлено)
         const canvas = document.getElementById('paint-canvas');
         const ctx = canvas.getContext('2d');
-        onValue(ref(rtdb, 'draw/stream'), (snap) => {
-            const v = snap.val();
-            if(!v) return;
-            if(v.type === 'clear') {
+        onValue(ref(rtdb, 'sync/paint'), snap => {
+            const data = snap.val();
+            if(!data) return;
+            if(data.action === 'clear') {
                 ctx.clearRect(0,0,canvas.width,canvas.height);
-                ctx.beginPath();
-            } else {
-                ctx.strokeStyle = v.color;
+            } else if (data.points) {
+                ctx.strokeStyle = data.color;
                 ctx.lineWidth = 2;
                 ctx.lineCap = 'round';
-                if(v.newPath) ctx.beginPath();
-                ctx.lineTo(v.x, v.y);
+                ctx.lineJoin = 'round';
+                ctx.beginPath();
+                ctx.moveTo(data.points[0].x, data.points[0].y);
+                data.points.forEach(p => ctx.lineTo(p.x, p.y));
                 ctx.stroke();
             }
         });
@@ -341,45 +335,62 @@
 
     window.syncVideo = () => {
         const url = document.getElementById('v-url').value;
-        if(url) set(ref(rtdb, 'video/current'), { url: url, sender: currentUser.nick, time: serverTimestamp() });
+        if(url) update(ref(rtdb, 'sync'), { video: { url: url, ts: serverTimestamp() } });
     };
 
+    // --- ЛОГИКА РИСОВАНИЯ (Whereby-style) ---
     const canvas = document.getElementById('paint-canvas');
-    const pctx = canvas.getContext('2d');
-    let drawing = false;
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let currentBatch = [];
 
-    const pushDraw = (x, y, isNew = false) => {
-        set(ref(rtdb, 'draw/stream'), {
-            x: x, y: y, 
-            color: document.getElementById('p-color').value, 
-            newPath: isNew,
-            time: serverTimestamp()
+    const getPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: clientX - rect.left, y: clientY - rect.top };
+    };
+
+    const startDrawing = (e) => {
+        isDrawing = true;
+        currentBatch = [getPos(e)];
+    };
+
+    const drawMove = (e) => {
+        if(!isDrawing) return;
+        const pos = getPos(e);
+        currentBatch.push(pos);
+        
+        // Локальная отрисовка для мгновенного отклика
+        ctx.strokeStyle = document.getElementById('p-color').value;
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+    };
+
+    const stopDrawing = () => {
+        if(!isDrawing) return;
+        isDrawing = false;
+        // Отправляем всю линию целиком одним пакетом
+        update(ref(rtdb, 'sync'), { 
+            paint: { 
+                points: currentBatch, 
+                color: document.getElementById('p-color').value,
+                ts: serverTimestamp() 
+            } 
         });
+        currentBatch = [];
     };
 
-    const startDraw = (e) => {
-        drawing = true;
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-        const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-        pushDraw(x, y, true);
-    };
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', drawMove);
+    window.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); drawMove(e); });
+    canvas.addEventListener('touchend', stopDrawing);
 
-    const moveDraw = (e) => {
-        if(!drawing) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-        const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-        pushDraw(x, y, false);
-    };
-
-    canvas.addEventListener('mousedown', startDraw);
-    canvas.addEventListener('mousemove', moveDraw);
-    window.addEventListener('mouseup', () => drawing = false);
-    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); });
-    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); moveDraw(e); });
-
-    window.clearCanvas = () => set(ref(rtdb, 'draw/stream'), { type: 'clear', time: serverTimestamp() });
+    window.clearCanvas = () => set(ref(rtdb, 'sync/paint'), { action: 'clear', ts: serverTimestamp() });
 
     window.switchTab = (id) => {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -389,11 +400,8 @@
         if(id === 'tab-paint') { canvas.width = canvas.offsetWidth; canvas.height = 400; }
     };
 
-    setInterval(() => {
-        document.getElementById('top-clock').innerText = new Date().toLocaleTimeString();
-    }, 1000);
-
-    window.logout = () => { location.reload(); };
+    setInterval(() => { document.getElementById('top-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+    window.logout = () => location.reload();
 </script>
 </body>
 </html>
