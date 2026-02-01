@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FreeNet v7.0 - Aero Edition</title>
+    <title>FreeNet v7.1 - Aero Sync Fixed</title>
     <style id="custom-css-style"></style>
     <style>
         :root {
@@ -23,7 +23,6 @@
             min-height: 100vh;
         }
 
-        /* Эффект Aero Glass */
         .glass-panel {
             background: var(--aero-bg);
             backdrop-filter: blur(15px);
@@ -34,14 +33,12 @@
             color: #000;
         }
 
-        /* Авторизация */
         #auth-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #004e92, #000428);
             z-index: 10000; display: flex; align-items: center; justify-content: center;
         }
 
-        /* Главное окно */
         .window {
             width: 100%; max-width: 1100px;
             margin: 0 auto; display: flex; flex-direction: column;
@@ -57,15 +54,9 @@
 
         .main-layout { display: flex; flex: 1; padding: 10px; gap: 15px; overflow: hidden; }
 
-        /* Сайдбар / Мобильная шапка */
-        .sidebar {
-            width: 260px; display: flex; flex-direction: column; gap: 10px;
-        }
+        .sidebar { width: 260px; display: flex; flex-direction: column; gap: 10px; }
 
-        .profile-card {
-            padding: 15px; text-align: center;
-        }
-
+        .profile-card { padding: 15px; text-align: center; }
         .profile-card img {
             width: 100px; height: 100px; border-radius: 50%;
             border: 3px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
@@ -75,7 +66,6 @@
         .stats-panel { font-size: 11px; padding: 10px; line-height: 1.6; }
         .stats-panel b { color: var(--win-blue); }
 
-        /* Контентная часть */
         .viewport { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         
         .tabs-aero {
@@ -108,7 +98,6 @@
             color: #fff; font-weight: bold; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
 
-        /* МОБИЛЬНАЯ ВЕРСИЯ */
         @media (max-width: 768px) {
             body { padding: 0; }
             .window { height: 100vh; border-radius: 0; }
@@ -117,7 +106,7 @@
             .tabs-aero { order: 1; }
             .profile-card { order: 0; }
             .viewport { order: 2; min-height: 500px; }
-            .stats-panel { display: none; } /* Скрываем на мобилках для места */
+            .stats-panel { display: none; }
         }
     </style>
 </head>
@@ -135,7 +124,7 @@
 
 <div class="window glass-panel">
     <div class="title-bar">
-        <span>FreeNet Aero v7.0</span>
+        <span>FreeNet Aero v7.1</span>
         <span id="top-clock">00:00:00</span>
     </div>
 
@@ -214,7 +203,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, orderBy, limit, addDoc, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getDatabase, ref, set, onValue, push, onDisconnect } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue, push, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBDrzNL3_kaSCU38Oac9-7CarZgqRfc9pU",
@@ -232,7 +221,6 @@
 
     let currentUser = null;
 
-    // --- СИСТЕМА ВХОДА ---
     window.handleAuth = async () => {
         const login = document.getElementById('auth-login').value.trim().toLowerCase();
         const pass = document.getElementById('auth-pass').value.trim();
@@ -257,7 +245,6 @@
         document.getElementById('sidebar-bg').value = data.bg || "";
         document.getElementById('user-css').value = data.css || "";
         
-        // Счетчик онлайна
         const onlineRef = ref(rtdb, 'online/' + nick);
         set(onlineRef, true);
         onDisconnect(onlineRef).remove();
@@ -279,42 +266,26 @@
         applyUserSettings();
     };
 
-    // --- СТАТИСТИКА ---
     async function updateGlobalStats() {
-        // Всего юзеров
-        const collUsers = collection(db, "users");
-        const snapshotUsers = await getCountFromServer(collUsers);
-        document.getElementById('stat-total').innerText = snapshotUsers.data().count;
-
-        // Всего сообщений
-        const collMsgs = collection(db, "messages");
-        const snapshotMsgs = await getCountFromServer(collMsgs);
-        document.getElementById('stat-msgs').innerText = snapshotMsgs.data().count;
-
-        // Онлайн
-        onValue(ref(rtdb, 'online'), (snap) => {
-            document.getElementById('stat-online').innerText = snap.exists() ? Object.keys(snap.val()).length : 1;
-        });
+        onSnapshot(collection(db, "users"), (snap) => { document.getElementById('stat-total').innerText = snap.size; });
+        onSnapshot(collection(db, "messages"), (snap) => { document.getElementById('stat-msgs').innerText = snap.size; });
+        onValue(ref(rtdb, 'online'), (snap) => { document.getElementById('stat-online').innerText = snap.exists() ? Object.keys(snap.val()).length : 0; });
     }
 
-    // --- ЛОГИКА ПРИЛОЖЕНИЯ ---
     function initApp() {
-        // Чат
-        const q = query(collection(db, "messages"), orderBy("time", "asc"), limit(70));
+        const q = query(collection(db, "messages"), orderBy("time", "asc"), limit(100));
         onSnapshot(q, (snap) => {
             const box = document.getElementById('messages');
             box.innerHTML = "";
             snap.forEach(d => {
                 const m = d.data();
                 const div = document.createElement('div');
-                div.style.padding = "5px 0";
-                div.innerHTML = `<span style="opacity:0.6; font-size:10px;">${new Date(m.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span> <b style="color:var(--win-blue)">${m.nick}:</b> ${m.text}`;
+                div.innerHTML = `<span style="opacity:0.5; font-size:10px;">${new Date(m.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span> <b style="color:var(--win-blue)">${m.nick}:</b> ${m.text}`;
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
         });
 
-        // Доска
         const qB = query(collection(db, "board"), orderBy("time", "desc"), limit(20));
         onSnapshot(qB, (snap) => {
             const box = document.getElementById('board-messages');
@@ -325,23 +296,32 @@
             });
         });
 
-        // Видео
-        onValue(ref(rtdb, 'videoUrl'), (snap) => {
-            const url = snap.val();
-            if(url) {
-                const id = url.match(/(?:v=|be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+        // СИНХРОНИЗАЦИЯ ВИДЕО
+        onValue(ref(rtdb, 'video/current'), (snap) => {
+            const vData = snap.val();
+            if(vData && vData.url) {
+                const id = vData.url.match(/(?:v=|be\/|embed\/)([a-zA-Z0-9_-]{11})/);
                 if(id) document.getElementById('video-container').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id[1]}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
             }
         });
 
-        // Рисование
+        // СИНХРОНИЗАЦИЯ РИСОВАНИЯ
         const canvas = document.getElementById('paint-canvas');
         const ctx = canvas.getContext('2d');
-        onValue(ref(rtdb, 'draw'), (snap) => {
+        onValue(ref(rtdb, 'draw/stream'), (snap) => {
             const v = snap.val();
             if(!v) return;
-            if(v.clear) ctx.clearRect(0,0,canvas.width,canvas.height);
-            else { ctx.strokeStyle = v.color; ctx.lineWidth = 2; ctx.lineTo(v.x, v.y); ctx.stroke(); }
+            if(v.type === 'clear') {
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                ctx.beginPath();
+            } else {
+                ctx.strokeStyle = v.color;
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                if(v.newPath) ctx.beginPath();
+                ctx.lineTo(v.x, v.y);
+                ctx.stroke();
+            }
         });
     }
 
@@ -359,19 +339,30 @@
         inp.value = "";
     };
 
-    window.syncVideo = () => { set(ref(rtdb, 'videoUrl'), document.getElementById('v-url').value); };
+    window.syncVideo = () => {
+        const url = document.getElementById('v-url').value;
+        if(url) set(ref(rtdb, 'video/current'), { url: url, sender: currentUser.nick, time: serverTimestamp() });
+    };
 
-    // --- РИСОВАЛКА ---
     const canvas = document.getElementById('paint-canvas');
     const pctx = canvas.getContext('2d');
     let drawing = false;
 
+    const pushDraw = (x, y, isNew = false) => {
+        set(ref(rtdb, 'draw/stream'), {
+            x: x, y: y, 
+            color: document.getElementById('p-color').value, 
+            newPath: isNew,
+            time: serverTimestamp()
+        });
+    };
+
     const startDraw = (e) => {
-        drawing = true; pctx.beginPath();
+        drawing = true;
         const rect = canvas.getBoundingClientRect();
         const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
         const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-        pctx.moveTo(x, y);
+        pushDraw(x, y, true);
     };
 
     const moveDraw = (e) => {
@@ -379,18 +370,17 @@
         const rect = canvas.getBoundingClientRect();
         const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
         const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-        set(ref(rtdb, 'draw'), { x, y, color: document.getElementById('p-color').value, time: Date.now() });
+        pushDraw(x, y, false);
     };
 
     canvas.addEventListener('mousedown', startDraw);
     canvas.addEventListener('mousemove', moveDraw);
     window.addEventListener('mouseup', () => drawing = false);
-    canvas.addEventListener('touchstart', startDraw);
-    canvas.addEventListener('touchmove', moveDraw);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); moveDraw(e); });
 
-    window.clearCanvas = () => set(ref(rtdb, 'draw'), { clear: true });
+    window.clearCanvas = () => set(ref(rtdb, 'draw/stream'), { type: 'clear', time: serverTimestamp() });
 
-    // --- УТИЛИТЫ ---
     window.switchTab = (id) => {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -400,8 +390,7 @@
     };
 
     setInterval(() => {
-        const now = new Date();
-        document.getElementById('top-clock').innerText = now.toLocaleTimeString();
+        document.getElementById('top-clock').innerText = new Date().toLocaleTimeString();
     }, 1000);
 
     window.logout = () => { location.reload(); };
