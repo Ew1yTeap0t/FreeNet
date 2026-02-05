@@ -3,435 +3,586 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FreeNet OS v8.0 - Aero Ultimate</title>
+    <title>FreeNet Aero OS v8.0</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkZyZWVOZXQgT1MiLAogICJzaG9ydF9uYW1lIjogIkZyZWVOZXQiLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzAwNGU5MiIsCiAgInRoZW1lX2NvbG9yIjogIzAwNGU5MiJ9">
+    <meta name="theme-color" content="#004e92">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkZyZWVOZXQgQWVybyIsCiAgInNob3J0X25hbWUiOiAiRnJlZU5ldCIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMDA0ZTkyIiwKICAidGhlbWVfY29sb3IiOiAiIzAwNGU5MiIsCiAgImljb25zIjogW3sgInNyYyI6ICJodHRwczovL3ZpYS5wbGFjZWhvbGRlci5jb20vMTkyLzAwNGU5Mi9mZmZmZmY/dGV4dD1GTiIsICJzaXplcyI6ICIxOTJ4MTkyIiwgInR5cGUiOiAiaW1hZ2UvcG5nIiB9XQp9">
 
-    <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
-    <style id="custom-profile-css"></style>
-    <style id="theme-logic-css"></style>
-    
+    <script src="https://unpkg.com/@ruffle-rs/ruffle"></script> <style id="custom-css-style"></style>
+    <style id="theme-logic-style"></style>
     <style>
         :root {
-            --aero-bg: rgba(255, 255, 255, 0.4);
-            --aero-border: rgba(255, 255, 255, 0.6);
+            --aero-bg: rgba(255, 255, 255, 0.35);
+            --aero-border: rgba(255, 255, 255, 0.5);
             --win-blue: #1b5ead;
             --font-main: 'Segoe UI', Tahoma, sans-serif;
         }
 
         body {
-            margin: 0; padding: 0;
+            margin: 0; padding: 0; height: 100vh; overflow: hidden;
             font-family: var(--font-main);
             background: #008080 url('https://wallpaperaccess.com/full/1155027.jpg') no-repeat center center fixed;
             background-size: cover;
-            height: 100vh; display: flex; flex-direction: column; overflow: hidden;
             transition: background 0.5s ease;
         }
 
         /* Эффекты фона */
-        #bg-effect-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
+        #fx-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
 
-        /* Стеклянные панели */
+        /* Стекло Aero */
         .glass {
             background: var(--aero-bg);
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--aero-border);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3), inset 0 0 15px rgba(255,255,255,0.2);
         }
 
-        /* Шапка (Mobile & Desktop) */
+        /* Экран входа */
+        #auth-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+        }
+        .auth-card { width: 350px; padding: 40px; border-radius: 25px; text-align: center; color: #000; }
+
+        /* Шапка для мобилок и ПК */
         .app-header {
-            height: 60px; display: flex; align-items: center; justify-content: space-between;
-            padding: 0 20px; z-index: 100; flex-shrink: 0; border-bottom: 1px solid rgba(255,255,255,0.3);
+            height: 55px; display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; z-index: 1000; position: relative;
         }
 
-        /* Основной контейнер */
-        .main-container {
-            flex: 1; display: flex; overflow: hidden; position: relative; z-index: 2;
-            max-width: 1400px; width: 100%; margin: 0 auto;
+        /* Главный контейнер */
+        .desktop-window {
+            width: 96%; max-width: 1300px; height: 85vh; margin: 10px auto;
+            display: flex; flex-direction: column; border-radius: 12px; overflow: hidden;
+            position: relative; z-index: 10;
         }
 
-        /* Сайдбар */
-        .sidebar {
-            width: 280px; display: flex; flex-direction: column; gap: 10px; padding: 10px;
-        }
-        .profile-box { padding: 15px; text-align: center; border-radius: 15px; }
-        .profile-box img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; cursor: pointer; }
+        .main-content { display: flex; flex: 1; overflow: hidden; padding: 10px; gap: 10px; }
 
-        /* Вьюпорт */
-        .viewport { flex: 1; display: flex; flex-direction: column; padding: 10px; overflow: hidden; }
-        
-        .tabs-nav {
-            display: flex; gap: 5px; background: rgba(0,0,0,0.1); padding: 5px; border-radius: 10px; margin-bottom: 10px;
+        /* Сайдбар / Профиль */
+        .sidebar { width: 280px; display: flex; flex-direction: column; gap: 10px; }
+        .user-panel { padding: 20px; text-align: center; border-radius: 15px; }
+        .user-panel img { width: 90px; height: 90px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; cursor: pointer; }
+        .status-text { font-size: 12px; color: #333; margin-top: 5px; font-style: italic; }
+
+        /* Вкладки */
+        .viewport { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .tabs-nav { 
+            display: flex; gap: 5px; padding: 5px; background: rgba(0,0,0,0.1); 
+            border-radius: 10px; margin-bottom: 10px; overflow-x: auto;
         }
         .tab-btn {
-            flex: 1; border: none; padding: 10px 5px; border-radius: 8px; cursor: pointer;
-            background: transparent; font-weight: 600; font-size: 12px; transition: 0.2s;
+            padding: 8px 15px; border: none; background: transparent; 
+            border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px;
+            white-space: nowrap; transition: 0.2s;
         }
-        .tab-btn.active { background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .tab-btn.active { background: #fff; color: var(--win-blue); box-shadow: 0 3px 6px rgba(0,0,0,0.1); }
 
         .page { display: none; flex-direction: column; height: 100%; overflow: hidden; }
         .page.active { display: flex; }
 
-        /* Чаты */
-        .chat-area { flex: 1; background: rgba(255,255,255,0.6); border-radius: 12px; margin-bottom: 10px; padding: 15px; overflow-y: auto; }
-        .msg { margin-bottom: 12px; position: relative; animation: fadeIn 0.3s; }
-        .msg-header { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 4px; }
-        .msg-header img { width: 24px; height: 24px; border-radius: 50%; }
-        .msg-bubble { background: #fff; padding: 8px 12px; border-radius: 12px; display: inline-block; color: #000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; }
-        
-        .typing-indicator { font-size: 11px; color: #fff; height: 15px; margin-bottom: 5px; font-style: italic; }
+        /* Чат */
+        #chat-messages {
+            flex: 1; background: rgba(255,255,255,0.6); border-radius: 10px;
+            padding: 15px; overflow-y: auto; margin-bottom: 10px;
+        }
+        .msg-obj { margin-bottom: 15px; display: flex; gap: 10px; }
+        .msg-ava { width: 35px; height: 35px; border-radius: 50%; cursor: pointer; }
+        .msg-body { background: #fff; padding: 8px 12px; border-radius: 12px; color: #000; position: relative; min-width: 60px; }
+        .msg-nick { font-size: 11px; font-weight: bold; color: var(--win-blue); margin-bottom: 3px; }
+        .is-typing { font-size: 11px; color: #555; height: 15px; margin-bottom: 5px; }
 
-        /* Рисование */
-        #paint-canvas { background: #fff; cursor: crosshair; touch-action: none; width: 100%; flex: 1; border-radius: 10px; }
+        /* Инструменты */
+        .input-area { display: flex; gap: 8px; }
+        input, textarea, select { 
+            padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); outline: none;
+        }
+        .btn-aero {
+            background: linear-gradient(to bottom, #4facfe, #00f2fe);
+            border: none; padding: 10px 20px; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer;
+        }
+
+        /* Рисовалка */
+        .paint-wrap { flex: 1; position: relative; background: #fff; border-radius: 10px; overflow: hidden; }
+        #paint-canvas { cursor: crosshair; transform-origin: 0 0; }
+
+        /* Кино комнаты */
+        .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .room-card { padding: 20px; text-align: center; cursor: pointer; border-radius: 12px; }
 
         /* Уведомления */
-        #notifications-box { position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; }
-        .toast { width: 250px; padding: 15px; border-radius: 12px; animation: slideIn 0.3s; }
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { width: 280px; padding: 15px; border-radius: 12px; color: #000; animation: slideIn 0.3s ease; }
 
-        /* Окно настроек */
-        #settings-modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 11000; 
-            display: none; align-items: center; justify-content: center;
-        }
-
-        /* Мобильные фиксы */
-        @media (max-width: 768px) {
-            .sidebar { display: none; }
-            .main-container { flex-direction: column; }
-            .app-header { height: 50px; font-size: 14px; }
-        }
+        /* Музыкальный плеер */
+        .music-bar { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; }
 
         @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Настройки */
+        .settings-trigger { cursor: pointer; transition: transform 0.3s; }
+        .settings-trigger:hover { transform: rotate(90deg); }
+
+        /* Мобильный вид */
+        @media (max-width: 768px) {
+            .desktop-window { width: 100%; height: 100vh; margin: 0; border-radius: 0; }
+            .sidebar { display: none; }
+            .app-header { background: var(--aero-bg); backdrop-filter: blur(10px); }
+        }
     </style>
 </head>
 <body>
 
-<canvas id="bg-effect-canvas"></canvas>
+<canvas id="fx-canvas"></canvas>
 
-<div id="auth-overlay" style="position:fixed; inset:0; z-index:20000; background:rgba(0,0,0,0.6); backdrop-filter:blur(10px); display:flex; align-items:center; justify-content:center;">
-    <div class="glass" style="width:300px; padding:30px; border-radius:20px; text-align:center; color:#000;">
-        <h2 style="color:var(--win-blue)">FreeNet Login</h2>
-        <input type="text" id="auth-nick" placeholder="Никнейм" style="width:100%; padding:10px; margin-bottom:10px; border-radius:5px; border:1px solid #ccc;">
-        <input type="password" id="auth-pass" placeholder="Пароль" style="width:100%; padding:10px; margin-bottom:20px; border-radius:5px; border:1px solid #ccc;">
-        <button onclick="login()" style="width:100%; padding:12px; background:var(--win-blue); color:#fff; border:none; border-radius:10px; cursor:pointer;">ВОЙТИ</button>
+<div id="auth-overlay">
+    <div class="auth-card glass">
+        <h1 style="margin-top:0">FreeNet Aero</h1>
+        <input type="text" id="auth-nick" placeholder="Ваш ник" style="width: 80%; margin-bottom: 10px;">
+        <input type="password" id="auth-pass" placeholder="Пароль" style="width: 80%; margin-bottom: 20px;">
+        <button class="btn-aero" style="width: 90%" onclick="app.auth()">ВОЙТИ / СОЗДАТЬ</button>
+        <p id="auth-err" style="color: maroon; font-size: 12px;"></p>
     </div>
 </div>
 
 <header class="app-header glass">
-    <div style="display:flex; align-items:center; gap:10px;">
-        <img src="https://via.placeholder.com/32" style="border-radius:50%">
-        <b style="color:#000; text-shadow: 0 1px 0 #fff;">FreeNet v8.0</b>
+    <div style="display:flex; align-items:center; gap:15px">
+        <strong style="color:#000; font-size:18px;">FreeNet 8.0</strong>
+        <div class="music-bar">
+            <span id="now-playing" style="font-size:11px; max-width:100px; overflow:hidden;">Music Off</span>
+            <button onclick="app.music.prev()" style="background:none; border:none; cursor:pointer;">⏮</button>
+            <button onclick="app.music.toggle()" id="play-btn" style="background:none; border:none; cursor:pointer;">▶</button>
+            <button onclick="app.music.next()" style="background:none; border:none; cursor:pointer;">⏭</button>
+        </div>
     </div>
-    <div id="audio-player" style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.3); padding:5px 15px; border-radius:20px;">
-        <span onclick="playerPrev()" style="cursor:pointer">⏮</span>
-        <span onclick="playerToggle()" id="play-btn" style="cursor:pointer">▶</span>
-        <span onclick="playerNext()" style="cursor:pointer">⏭</span>
-        <input type="text" id="pl-url" placeholder="Ссылка на плейлист" style="font-size:10px; border:none; background:none; width:80px;">
-    </div>
-    <div style="display:flex; align-items:center; gap:15px; color:#000;">
-        <span id="header-clock">00:00:00</span>
-        <span onclick="toggleSettings()" style="cursor:pointer; font-size:20px;">⚙️</span>
+    <div style="display:flex; align-items:center; gap:20px">
+        <span id="clock" style="color:#000; font-weight:bold; letter-spacing:1px;">00:00:00</span>
+        <span class="settings-trigger" onclick="app.ui.openSettings()">⚙️</span>
     </div>
 </header>
 
-<div class="main-container">
-    <div class="sidebar">
-        <div class="profile-box glass">
-            <img id="my-ava" src="https://via.placeholder.com/80" onclick="viewMyProfile()">
-            <h3 id="my-nick" style="margin:10px 0; font-size:16px;">Загрузка...</h3>
-            <p id="my-desc" style="font-size:11px; opacity:0.8; margin-bottom:15px;">Нет описания</p>
-            <div style="display:flex; flex-direction:column; gap:5px;">
-                <input type="text" id="set-ava" placeholder="URL Аватара" style="font-size:10px;" onchange="updateProfile('ava', this.value)">
-                <input type="text" id="set-bg" placeholder="URL Фона" style="font-size:10px;" onchange="updateProfile('bg', this.value)">
-                <textarea id="set-desc" placeholder="Описание" style="font-size:10px; height:40px;" onchange="updateProfile('desc', this.value)"></textarea>
-            </div>
-        </div>
-        <div class="glass" style="flex:1; padding:15px; border-radius:15px; overflow-y:auto;">
-            <b style="font-size:12px; color:#000;">Друзья онлайн:</b>
-            <div id="friends-list" style="margin-top:10px;"></div>
-        </div>
-    </div>
-
-    <div class="viewport">
-        <nav class="tabs-nav">
-            <button class="tab-btn active" onclick="switchTab('tab-chat')">Чат</button>
-            <button class="tab-btn" onclick="switchTab('tab-friends')">Друзья</button>
-            <button class="tab-btn" onclick="switchTab('tab-cinema')">Кино</button>
-            <button class="tab-btn" onclick="switchTab('tab-paint')">Рисование</button>
-            <button class="tab-btn" onclick="switchTab('tab-games')">Игры</button>
-            <button class="tab-btn" onclick="switchTab('tab-style')">Стиль</button>
-        </nav>
-
-        <div id="tab-chat" class="page active">
-            <div id="chat-box" class="chat-area"></div>
-            <div id="typing-box" class="typing-indicator"></div>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="chat-input" placeholder="Сообщение..." style="flex:1; padding:12px; border-radius:10px; border:none;" oninput="broadcastTyping()">
-                <button onclick="sendMsg()" class="tab-btn active" style="flex:none; width:50px;">></button>
-            </div>
-        </div>
-
-        <div id="tab-cinema" class="page">
-            <div id="cinema-lobby">
-                <div style="display:flex; gap:10px; margin-bottom:10px;">
-                    <button onclick="createRoom()" class="tab-btn active">Создать комнату</button>
-                </div>
-                <div id="room-list" class="chat-area"></div>
-            </div>
-            <div id="cinema-room" style="display:none; flex:1; flex-direction:column;">
-                <div id="yt-player" style="flex:1; background:#000; border-radius:10px;"></div>
-                <div class="chat-area" id="room-chat" style="height:150px; margin-top:10px;"></div>
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="yt-url" placeholder="YouTube Link" style="flex:1; padding:8px;">
-                    <button onclick="syncVideo()" class="tab-btn active" style="flex:none">SYNC</button>
+<div class="desktop-window glass">
+    <div class="main-content">
+        <div class="sidebar">
+            <div class="user-panel glass">
+                <img id="my-ava" src="https://via.placeholder.com/90" onclick="app.ui.editProfile()">
+                <h3 id="my-nick" style="margin:10px 0 0 0">...</h3>
+                <div id="my-desc" class="status-text">Нет описания</div>
+                <hr style="opacity:0.2; margin:15px 0">
+                <div style="text-align:left; font-size:11px;">
+                    <b>Мой фон:</b> <input type="text" id="set-bg" placeholder="URL картинки" onchange="app.user.update('bg', this.value)" style="width:90%; padding:4px; font-size:10px; margin-top:4px;">
+                    <b style="display:block; margin-top:8px;">Моя ава:</b> <input type="text" id="set-ava" placeholder="URL авы" onchange="app.user.update('ava', this.value)" style="width:90%; padding:4px; font-size:10px;">
                 </div>
             </div>
-        </div>
-
-        <div id="tab-paint" class="page">
-            <div style="display:flex; gap:10px; margin-bottom:5px; align-items:center;">
-                <input type="color" id="p-color" value="#000000">
-                <input type="range" id="p-size" min="1" max="50" value="5">
-                <button onclick="setTool('pen')">Кисть</button>
-                <button onclick="setTool('eraser')">Ластик</button>
-                <button onclick="clearCanvas()">Очистить</button>
+            
+            <div class="glass" style="padding:15px; flex:1; overflow-y:auto;">
+                <b>Сейчас в сети:</b>
+                <div id="online-list" style="margin-top:10px; font-size:13px;"></div>
             </div>
-            <canvas id="paint-canvas"></canvas>
         </div>
 
-        <div id="tab-games" class="page">
-            <div style="display:flex; gap:10px; margin-bottom:10px;">
-                <select id="game-select" style="flex:1; padding:10px; border-radius:10px;">
-                    <option value="https://data.mofunzone.com/games/swf/strikeforceheroes.swf">Strike Force Heroes</option>
-                    <option value="https://data.mofunzone.com/games/swf/ageofwar.swf">Age of War</option>
-                </select>
-                <button onclick="startGame()" class="tab-btn active">ИГРАТЬ</button>
+        <div class="viewport">
+            <div class="tabs-nav">
+                <button class="tab-btn active" onclick="app.ui.tab('chat')">Чат</button>
+                <button class="tab-btn" onclick="app.ui.tab('friends')">Друзья</button>
+                <button class="tab-btn" onclick="app.ui.tab('cinema')">Кино</button>
+                <button class="tab-btn" onclick="app.ui.tab('paint')">Рисование</button>
+                <button class="tab-btn" onclick="app.ui.tab('games')">Игры</button>
+                <button class="tab-btn" onclick="app.ui.tab('css')">Стиль</button>
             </div>
-            <div id="game-container" style="flex:1; background:#000; border-radius:10px;"></div>
-        </div>
 
-        <div id="tab-style" class="page">
-            <div class="glass" style="padding:20px; border-radius:15px;">
-                <h3 style="margin-top:0">Твой CSS код:</h3>
-                <textarea id="css-editor" style="width:100%; height:300px; font-family:monospace; padding:10px; box-sizing:border-box; border-radius:10px;" placeholder="body { filter: sepia(0.5); }"></textarea>
-                <button onclick="updateProfile('css', document.getElementById('css-editor').value)" class="tab-btn active" style="width:100%; margin-top:10px;">СОХРАНИТЬ ДИЗАЙН</button>
+            <div id="page-chat" class="page active">
+                <div id="chat-messages"></div>
+                <div id="typing-notify" class="is-typing"></div>
+                <div class="input-area">
+                    <input type="text" id="chat-input" placeholder="Сообщение..." style="flex:1" oninput="app.chat.typing()" onkeypress="if(event.key==='Enter') app.chat.send()">
+                    <button class="btn-aero" onclick="app.chat.send()">ОТПРАВИТЬ</button>
+                </div>
+            </div>
+
+            <div id="page-friends" class="page">
+                <div id="friends-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:10px;"></div>
+            </div>
+
+            <div id="page-cinema" class="page">
+                <div id="cinema-lobby">
+                    <div style="margin-bottom:20px; display:flex; gap:10px;">
+                        <button class="btn-aero" onclick="app.cinema.createRoom()">Создать комнату</button>
+                    </div>
+                    <div id="room-list" class="room-grid"></div>
+                </div>
+                <div id="cinema-room" style="display:none; flex:1; flex-direction:column;">
+                    <div class="input-area" style="margin-bottom:10px;">
+                        <input type="text" id="yt-url" placeholder="YouTube ссылка" style="flex:1">
+                        <button class="btn-aero" onclick="app.cinema.loadVideo()">LOAD</button>
+                        <button class="btn-aero" style="background:maroon" onclick="app.cinema.leave()">ВЫЙТИ</button>
+                    </div>
+                    <div id="player-container" style="flex:1.5; background:#000; border-radius:10px; overflow:hidden;"></div>
+                    <div id="room-chat" style="flex:1; background:rgba(0,0,0,0.05); margin-top:10px; display:flex; flex-direction:column;">
+                        <div id="room-messages" style="flex:1; overflow-y:auto; padding:10px; font-size:13px;"></div>
+                        <input type="text" id="room-input" placeholder="Чат комнаты..." onkeypress="if(event.key==='Enter') app.cinema.sendChat()">
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-paint" class="page">
+                <div style="background:rgba(255,255,255,0.5); padding:10px; display:flex; gap:10px; align-items:center; border-radius:10px 10px 0 0;">
+                    <input type="color" id="paint-color" value="#1b5ead">
+                    <input type="range" id="paint-size" min="1" max="50" value="5" title="Размер">
+                    <button class="btn-aero" onclick="app.paint.setTool('brush')">Кисть</button>
+                    <button class="btn-aero" style="background:#666" onclick="app.paint.setTool('eraser')">Ластик</button>
+                    <button class="btn-aero" style="background:maroon" onclick="app.paint.clear()">Очистить</button>
+                    <span style="font-size:12px">Колесо мыши: Зум</span>
+                </div>
+                <div class="paint-wrap" id="paint-container">
+                    <canvas id="paint-canvas"></canvas>
+                </div>
+            </div>
+
+            <div id="page-games" class="page">
+                <div class="room-grid">
+                    <div class="room-card glass" onclick="app.games.play('ageofwar')">Age of War</div>
+                    <div class="room-card glass" onclick="app.games.play('sfh')">Strike Force Heroes</div>
+                    <div class="room-card glass" onclick="app.games.play('happywheels')">Happy Wheels</div>
+                </div>
+                <div id="game-stage" style="display:none; position:fixed; inset:0; z-index:2000; background:#000;">
+                    <button onclick="app.games.close()" style="position:fixed; top:10px; right:10px; z-index:2001;">[X] ЗАКРЫТЬ ГРУ</button>
+                    <div id="ruffle-host" style="width:100%; height:100%;"></div>
+                </div>
+            </div>
+
+            <div id="page-css" class="page">
+                <div class="glass" style="padding:20px; border-radius:12px;">
+                    <h3>Настройка стиля твоего профиля</h3>
+                    <p style="font-size:12px;">Твой CSS код увидят все, кто зайдет на твой профиль.</p>
+                    <textarea id="css-editor" style="width:100%; height:250px; font-family:monospace;"></textarea>
+                    <button class="btn-aero" style="width:100%; margin-top:10px;" onclick="app.user.update('css', document.getElementById('css-editor').value)">СОХРАНИТЬ КОД</button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<div id="settings-modal">
-    <div class="glass" style="width:300px; padding:20px; border-radius:20px; color:#000;">
-        <h3 style="margin-top:0">Настройки</h3>
-        <label>Тема:</label>
-        <select id="theme-select" onchange="setTheme(this.value)" style="width:100%; margin-bottom:10px; padding:5px;">
-            <option value="default">Windows Aero (Blue)</option>
-            <option value="dark">Dark Glass</option>
-            <option value="xp">Luna (XP)</option>
-            <option value="pink">Sakura Pink</option>
-            <option value="gold">Luxury Gold</option>
-        </select>
-        <label>Эффект фона:</label>
-        <select id="effect-select" onchange="setEffect(this.value)" style="width:100%; margin-bottom:10px; padding:5px;">
-            <option value="none">Нет</option>
-            <option value="snow">Снег</option>
-            <option value="rain">Дождь</option>
-            <option value="stars">Звезды</option>
-        </select>
-        <button onclick="toggleSettings()" class="tab-btn active" style="width:100%">Закрыть</button>
-    </div>
+<div id="toast-container"></div>
+
+<div id="modal-settings" class="glass" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:11000; padding:30px; border-radius:20px; width:300px;">
+    <h2 style="margin-top:0">Настройки</h2>
+    <b>Тема системы:</b>
+    <select id="select-theme" onchange="app.ui.setTheme(this.value)" style="width:100%; margin:10px 0;">
+        <option value="aero">Aero Classic (Blue)</option>
+        <option value="dark">Dark Glass (Black)</option>
+        <option value="xp">Luna XP (Green/Blue)</option>
+        <option value="royal">Royal Purple</option>
+        <option value="frost">White Frost</option>
+    </select>
+    <b>Эффекты:</b>
+    <select id="select-fx" onchange="app.fx.set(this.value)" style="width:100%; margin:10px 0;">
+        <option value="none">Нет</option>
+        <option value="snow">Снег</option>
+        <option value="rain">Дождь</option>
+        <option value="stars">Звезды</option>
+    </select>
+    <button class="btn-aero" style="width:100%" onclick="this.parentElement.style.display='none'">ЗАКРЫТЬ</button>
 </div>
 
-<div id="notifications-box"></div>
+<div id="modal-profile" class="glass" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:11000; padding:40px; border-radius:25px; text-align:center; min-width:300px;">
+    <img id="prof-ava" src="" style="width:120px; height:120px; border-radius:50%; border:5px solid #fff;">
+    <h2 id="prof-nick"></h2>
+    <p id="prof-desc" style="font-style:italic;"></p>
+    <div id="prof-actions"></div>
+    <button class="btn-aero" style="margin-top:20px; background:#666" onclick="app.ui.closeProfile()">ВЕРНУТЬСЯ К СЕБЕ</button>
+</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, orderBy, limit, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getDatabase, ref, set, onValue, onDisconnect, serverTimestamp, update, push, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    const firebaseConfig = {
+    const fbCfg = {
         apiKey: "AIzaSyBDrzNL3_kaSCU38Oac9-7CarZgqRfc9pU",
         authDomain: "freenet-3ad3c.firebaseapp.com",
         projectId: "freenet-3ad3c",
         databaseURL: "https://freenet-3ad3c-default-rtdb.europe-west1.firebasedatabase.app/"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const rtdb = getDatabase(app);
+    const fb = initializeApp(fbCfg);
+    const db = getFirestore(fb);
+    const rtdb = getDatabase(fb);
 
-    let user = null;
-    let viewingProfile = null;
-
-    // --- Авторизация ---
-    window.login = async () => {
-        const nick = document.getElementById('auth-nick').value.trim();
-        const pass = document.getElementById('auth-pass').value.trim();
-        if(!nick || !pass) return;
-
-        const uDoc = await getDoc(doc(db, "users", nick.toLowerCase()));
-        if(uDoc.exists()) {
-            if(uDoc.data().pass === pass) { startApp(nick.toLowerCase(), uDoc.data()); }
-            else { alert("Пароль неверный!"); }
-        } else {
-            const data = { pass, nick, ava: "", bg: "", desc: "", css: "", friends: [] };
-            await setDoc(doc(db, "users", nick.toLowerCase()), data);
-            startApp(nick.toLowerCase(), data);
-        }
-    };
-
-    function startApp(id, data) {
-        user = { id, ...data };
-        localStorage.setItem('fn_user', id);
-        localStorage.setItem('fn_pass', data.pass);
-        document.getElementById('auth-overlay').style.display = 'none';
+    const app = {
+        state: { user: null, currentRoom: null, friends: [], viewNick: null },
         
-        applyProfile(user);
-        initSync();
-    }
+        auth: async () => {
+            const n = document.getElementById('auth-nick').value.trim().toLowerCase();
+            const p = document.getElementById('auth-pass').value.trim();
+            if(!n || !p) return;
+            const uDoc = await getDoc(doc(db, "users", n));
+            if(uDoc.exists()) {
+                if(uDoc.data().pass === p) app.initUser(n, uDoc.data());
+                else document.getElementById('auth-err').innerText = "Пароль не верен";
+            } else {
+                const data = { pass: p, nick: n, ava: "", bg: "", desc: "Всем привет!", css: "", theme: "aero", fx: "none" };
+                await setDoc(doc(db, "users", n), data);
+                app.initUser(n, data);
+            }
+        },
 
-    // --- Профили и Стили ---
-    function applyProfile(profileData) {
-        document.getElementById('custom-profile-css').innerText = profileData.css || "";
-        if(profileData.bg) document.body.style.backgroundImage = `url('${profileData.bg}')`;
-        else document.body.style.backgroundImage = "url('https://wallpaperaccess.com/full/1155027.jpg')";
-        
-        if(profileData.id === user.id) {
-            document.getElementById('my-nick').innerText = profileData.nick;
-            document.getElementById('my-desc').innerText = profileData.desc || "Нет описания";
-            document.getElementById('my-ava').src = profileData.ava || "https://via.placeholder.com/80";
-        }
-    }
+        initUser: (nick, data) => {
+            app.state.user = { nick, ...data };
+            app.state.viewNick = nick;
+            document.getElementById('auth-overlay').style.display = 'none';
+            document.getElementById('my-nick').innerText = nick;
+            app.user.apply(data);
+            
+            // Статус онлайн
+            const oRef = ref(rtdb, 'online/' + nick);
+            set(oRef, { ava: data.ava || "" });
+            onDisconnect(oRef).remove();
 
-    window.updateProfile = async (field, val) => {
-        user[field] = val;
-        await updateDoc(doc(db, "users", user.id), { [field]: val });
-        applyProfile(user);
-    };
+            app.subs.init();
+        },
 
-    // --- Чат и Удаление ---
-    window.sendMsg = async () => {
-        const inp = document.getElementById('chat-input');
-        if(!inp.value) return;
-        await addDoc(collection(db, "messages"), {
-            uid: user.id, nick: user.nick, ava: user.ava,
-            text: inp.value, time: serverTimestamp()
-        });
-        inp.value = "";
-    };
+        user: {
+            update: async (f, v) => {
+                await updateDoc(doc(db, "users", app.state.user.nick), { [f]: v });
+                app.state.user[f] = v;
+                if(app.state.viewNick === app.state.user.nick) app.user.apply(app.state.user);
+            },
+            apply: (data) => {
+                document.body.style.backgroundImage = data.bg ? `url('${data.bg}')` : "url('https://wallpaperaccess.com/full/1155027.jpg')";
+                document.getElementById('custom-css-style').innerText = data.css || "";
+                if(data.nick === app.state.user.nick) {
+                    document.getElementById('my-ava').src = data.ava || "https://via.placeholder.com/90";
+                    document.getElementById('my-desc').innerText = data.desc;
+                    document.getElementById('set-ava').value = data.ava;
+                    document.getElementById('set-bg').value = data.bg;
+                    document.getElementById('css-editor').value = data.css;
+                }
+            }
+        },
 
-    function initSync() {
-        // Чат
-        onSnapshot(query(collection(db, "messages"), orderBy("time", "asc"), limit(50)), snap => {
-            const box = document.getElementById('chat-box');
-            box.innerHTML = "";
-            snap.forEach(d => {
-                const m = d.data();
-                const isMy = m.uid === user.id;
-                const msgDiv = document.createElement('div');
-                msgDiv.className = 'msg';
-                msgDiv.innerHTML = `
-                    <div class="msg-header" onclick="loadUserProfile('${m.uid}')">
-                        <img src="${m.ava || 'https://via.placeholder.com/24'}">
-                        <b>${m.nick}</b>
+        subs: {
+            init: () => {
+                // Глобальный чат
+                onSnapshot(query(collection(db, "chat"), orderBy("time", "asc"), limit(50)), s => {
+                    const b = document.getElementById('chat-messages'); b.innerHTML = "";
+                    s.forEach(d => {
+                        const m = d.data();
+                        const isMe = m.nick === app.state.user.nick;
+                        b.innerHTML += `
+                            <div class="msg-obj" id="msg-${d.id}">
+                                <img src="${m.ava || 'https://via.placeholder.com/35'}" class="msg-ava" onclick="app.ui.viewProfile('${m.nick}')">
+                                <div class="msg-body" onclick="app.chat.menu('${d.id}', '${m.nick}')">
+                                    <div class="msg-nick">${m.nick}</div>
+                                    ${m.text}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    b.scrollTop = b.scrollHeight;
+                });
+
+                // Онлайн список
+                onValue(ref(rtdb, 'online'), s => {
+                    const list = document.getElementById('online-list'); list.innerHTML = "";
+                    if(s.exists()) {
+                        Object.entries(s.val()).forEach(([nick, val]) => {
+                            list.innerHTML += `<div style="padding:5px; cursor:pointer" onclick="app.ui.viewProfile('${nick}')">🟢 ${nick}</div>`;
+                        });
+                    }
+                });
+
+                // Друзья и запросы
+                onSnapshot(doc(db, "users", app.state.user.nick), s => {
+                    const d = s.data();
+                    app.state.friends = d.friends || [];
+                    app.ui.renderFriends();
+                });
+
+                onValue(ref(rtdb, `req/${app.state.user.nick}`), s => {
+                    if(s.exists()) {
+                        Object.entries(s.val()).forEach(([from, val]) => {
+                            app.ui.toastFriend(from);
+                        });
+                    }
+                });
+            }
+        },
+
+        chat: {
+            send: async () => {
+                const i = document.getElementById('chat-input'); if(!i.value) return;
+                await addDoc(collection(db, "chat"), { 
+                    nick: app.state.user.nick, 
+                    ava: app.state.user.ava, 
+                    text: i.value, 
+                    time: Date.now() 
+                });
+                i.value = "";
+            },
+            menu: async (id, nick) => {
+                const isMe = nick === app.state.user.nick;
+                const act = confirm(isMe ? "Удалить для всех?" : "Удалить у себя?");
+                if(act) {
+                    if(isMe) await deleteDoc(doc(db, "chat", id));
+                    else document.getElementById('msg-'+id).style.display = 'none';
+                }
+            },
+            typing: () => {
+                set(ref(rtdb, `typing/${app.state.user.nick}`), true);
+                setTimeout(() => remove(ref(rtdb, `typing/${app.state.user.nick}`)), 2000);
+            }
+        },
+
+        ui: {
+            tab: (id) => {
+                document.querySelectorAll('.page, .tab-btn').forEach(el => el.classList.remove('active'));
+                document.getElementById('page-'+id).classList.add('active');
+                event.target.classList.add('active');
+                if(id === 'paint') app.paint.init();
+            },
+            viewProfile: async (nick) => {
+                const uDoc = await getDoc(doc(db, "users", nick));
+                if(!uDoc.exists()) return;
+                const d = uDoc.data();
+                app.state.viewNick = nick;
+                app.user.apply(d);
+                
+                const m = document.getElementById('modal-profile');
+                m.style.display = 'block';
+                document.getElementById('prof-ava').src = d.ava || "https://via.placeholder.com/120";
+                document.getElementById('prof-nick').innerText = nick;
+                document.getElementById('prof-desc').innerText = d.desc;
+                
+                const act = document.getElementById('prof-actions'); act.innerHTML = "";
+                if(nick !== app.state.user.nick && !app.state.friends.includes(nick)) {
+                    act.innerHTML = `<button class="btn-aero" onclick="app.ui.addFriend('${nick}')">Добавить в друзья</button>`;
+                }
+            },
+            closeProfile: () => {
+                document.getElementById('modal-profile').style.display = 'none';
+                app.state.viewNick = app.state.user.nick;
+                app.user.apply(app.state.user);
+            },
+            addFriend: (n) => {
+                set(ref(rtdb, `req/${n}/${app.state.user.nick}`), true);
+                alert("Запрос отправлен!");
+            },
+            toastFriend: (from) => {
+                const c = document.getElementById('toast-container');
+                const t = document.createElement('div');
+                t.className = 'toast glass';
+                t.innerHTML = `
+                    <b>Запрос в друзья!</b><br>От: ${from}
+                    <div style="margin-top:10px">
+                        <button onclick="app.ui.confirmFriend('${from}', true, this)">Принять</button>
+                        <button onclick="app.ui.confirmFriend('${from}', false, this)">Нет</button>
                     </div>
-                    <div class="msg-bubble" onclick="msgMenu('${d.id}', '${m.uid}')">${m.text}</div>
                 `;
-                box.appendChild(msgDiv);
-            });
-            box.scrollTop = box.scrollHeight;
-        });
+                c.appendChild(t);
+            },
+            confirmFriend: async (from, ok, btn) => {
+                remove(ref(rtdb, `req/${app.state.user.nick}/${from}`));
+                if(ok) {
+                    const myF = [...app.state.friends, from];
+                    await updateDoc(doc(db, "users", app.state.user.nick), { friends: myF });
+                    const hisDoc = await getDoc(doc(db, "users", from));
+                    const hisF = [...(hisDoc.data().friends || []), app.state.user.nick];
+                    await updateDoc(doc(db, "users", from), { friends: hisF });
+                }
+                btn.parentElement.parentElement.remove();
+            },
+            renderFriends: () => {
+                const g = document.getElementById('friends-grid'); g.innerHTML = "";
+                app.state.friends.forEach(f => {
+                    g.innerHTML += `
+                        <div class="room-card glass" onclick="app.ui.viewProfile('${f}')">
+                            <b>${f}</b>
+                        </div>
+                    `;
+                });
+            },
+            setTheme: (t) => {
+                const s = document.getElementById('theme-logic-style');
+                if(t === 'dark') s.innerText = ":root { --aero-bg: rgba(0,0,0,0.7); --aero-border: rgba(255,255,255,0.2); } body { color: #fff; }";
+                else if(t === 'xp') s.innerText = ":root { --aero-bg: rgba(235, 236, 241, 0.9); --win-blue: #245dd7; }";
+                else s.innerText = "";
+            },
+            openSettings: () => {
+                document.getElementById('modal-settings').style.display = 'block';
+            }
+        },
 
-        // Кто печатает
-        onValue(ref(rtdb, 'typing'), snap => {
-            const data = snap.val() || {};
-            const typers = Object.values(data).filter(n => n !== user.nick);
-            document.getElementById('typing-box').innerText = typers.length ? `${typers.join(', ')} печатает...` : '';
-        });
-    }
+        cinema: {
+            createRoom: async () => {
+                const n = prompt("Имя комнаты:");
+                const p = prompt("Пароль:");
+                if(n) {
+                    const rRef = push(ref(rtdb, 'rooms'));
+                    await set(rRef, { name: n, pass: p, host: app.state.user.nick, video: "" });
+                    app.cinema.join(rRef.key, p);
+                }
+            },
+            join: (id, p) => {
+                onValue(ref(rtdb, `rooms/${id}`), s => {
+                    const d = s.val();
+                    if(d.pass !== p) return alert("Неверный пароль");
+                    app.state.currentRoom = id;
+                    document.getElementById('cinema-lobby').style.display = 'none';
+                    document.getElementById('cinema-room').style.display = 'flex';
+                    app.cinema.sync(d);
+                });
+            },
+            sync: (d) => {
+                const cont = document.getElementById('player-container');
+                if(d.video) {
+                    const id = d.video.match(/(?:v=|be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+                    if(id) cont.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id[1]}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
+                }
+            }
+        },
 
-    window.msgMenu = (mid, ownerId) => {
-        const action = confirm(ownerId === user.id ? "Удалить у всех? (Отмена - удалить только у себя)" : "Удалить сообщение у себя?");
-        if(action && ownerId === user.id) deleteDoc(doc(db, "messages", mid));
-        else event.target.closest('.msg').remove();
+        paint: {
+            init: () => {
+                const can = document.getElementById('paint-canvas');
+                const ctx = can.getContext('2d');
+                can.width = 2000; can.height = 2000;
+                
+                let draw = false;
+                can.onmousedown = (e) => { draw = true; ctx.beginPath(); };
+                can.onmousemove = (e) => {
+                    if(!draw) return;
+                    ctx.strokeStyle = document.getElementById('paint-color').value;
+                    ctx.lineWidth = document.getElementById('paint-size').value;
+                    ctx.lineCap = 'round';
+                    ctx.lineTo(e.offsetX, e.offsetY);
+                    ctx.stroke();
+                };
+                window.onmouseup = () => draw = false;
+            }
+        },
+
+        fx: {
+            set: (type) => { /* Логика частиц на Canvas */ }
+        },
+
+        music: {
+            toggle: () => { /* Логика плеера */ }
+        },
+
+        games: {
+            play: (slug) => {
+                document.getElementById('game-stage').style.display = 'block';
+                // Здесь будет Ruffle инициализация
+            },
+            close: () => document.getElementById('game-stage').style.display = 'none'
+        }
     };
 
-    window.broadcastTyping = () => {
-        const tRef = ref(rtdb, `typing/${user.id}`);
-        set(tRef, user.nick);
-        clearTimeout(window.typingTimeout);
-        window.typingTimeout = setTimeout(() => remove(tRef), 2000);
-    };
-
-    // --- Рисование ---
-    const canvas = document.getElementById('paint-canvas');
-    const ctx = canvas.getContext('2d');
-    let drawing = false, tool = 'pen';
-    
-    canvas.addEventListener('mousedown', () => drawing = true);
-    window.addEventListener('mouseup', () => drawing = false);
-    canvas.addEventListener('mousemove', (e) => {
-        if(!drawing) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left, y = e.clientY - rect.top;
-        drawOnCloud(x, y);
-    });
-
-    function drawOnCloud(x, y) {
-        update(ref(rtdb, 'paint'), {
-            x, y, color: tool === 'eraser' ? '#ffffff' : document.getElementById('p-color').value,
-            size: document.getElementById('p-size').value,
-            ts: serverTimestamp()
-        });
-    }
-
-    onValue(ref(rtdb, 'paint'), snap => {
-        const d = snap.val(); if(!d) return;
-        ctx.fillStyle = d.color;
-        ctx.beginPath(); ctx.arc(d.x, d.y, d.size/2, 0, Math.PI*2); ctx.fill();
-    });
-
-    // --- Вкладки и Игры ---
-    window.switchTab = (id) => {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        event.target.classList.add('active');
-        if(id === 'tab-paint') { canvas.width = canvas.offsetWidth; canvas.height = 500; }
-    };
-
-    window.startGame = () => {
-        const url = document.getElementById('game-select').value;
-        const container = document.getElementById('game-container');
-        container.innerHTML = "";
-        const ruffle = window.RufflePlayer.newest();
-        const player = ruffle.createPlayer();
-        container.appendChild(player);
-        player.load(url);
-    };
-
-    // --- Часы и Настройки ---
-    setInterval(() => {
-        document.getElementById('header-clock').innerText = new Date().toLocaleTimeString();
-    }, 1000);
-
-    window.toggleSettings = () => {
-        const m = document.getElementById('settings-modal');
-        m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
-    };
-
-    window.setTheme = (t) => {
-        let css = "";
-        if(t === 'dark') css = "body { --aero-bg: rgba(0,0,0,0.7); color: #fff; } .glass { color:#fff; }";
-        if(t === 'xp') css = "body { background: #245edb; --win-blue: #3d95ff; } .app-header { background: linear-gradient(#245edb, #3d95ff); }";
-        document.getElementById('theme-logic-css').innerText = css;
-    };
-
+    window.app = app;
+    setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString(), 1000);
 </script>
-
 </body>
 </html>
