@@ -1,506 +1,190 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FreeNet OS v8.5 - Final Aero</title>
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3953/3953226.png">
-    
-    <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
-
-    <style id="custom-css-style"></style>
+    <title>SpaceHey Ultra Hub</title>
+    <style id="user-styles">/* Кастомные стили пользователя */</style>
     <style>
-        :root {
-            --aero-bg: rgba(255, 255, 255, 0.4);
-            --aero-border: rgba(255, 255, 255, 0.6);
-            --win-blue: #1b5ead;
-            --font-main: 'Segoe UI', Tahoma, sans-serif;
-        }
+        body { background: #008080; font-family: 'Tahoma', sans-serif; margin: 0; padding: 20px; transition: all 0.3s; }
+        .window { width: 850px; background: #c0c0c0; border: 2px solid #fff; border-right: 2px solid #000; border-bottom: 2px solid #000; margin: 0 auto; overflow: hidden; }
+        .title-bar { background: linear-gradient(90deg, navy, #1084d0); color: white; padding: 3px 5px; font-weight: bold; display: flex; justify-content: space-between; }
+        
+        /* Вкладки */
+        .tabs { display: flex; background: #c0c0c0; padding: 5px 5px 0 5px; gap: 2px; border-bottom: 2px solid #888; }
+        .tab { padding: 4px 12px; border: 1px solid #000; border-bottom: none; cursor: pointer; background: #999; font-size: 11px; }
+        .tab.active { background: #eee; font-weight: bold; position: relative; top: 1px; border-bottom: 1px solid #eee; }
 
-        body {
-            background: #008080 url('https://wallpaperaccess.com/full/1155027.jpg') no-repeat center center fixed;
-            background-size: cover; font-family: var(--font-main);
-            margin: 0; padding: 0; color: #fff; height: 100vh; overflow: hidden;
-            transition: all 0.5s ease;
-        }
+        .main-layout { display: flex; gap: 10px; padding: 10px; height: 550px; }
+        .sidebar { width: 200px; background: #eee; border: 2px inset #fff; padding: 10px; font-size: 12px; overflow-y: auto; }
+        .content { flex-grow: 1; background: #fff; border: 2px inset #fff; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        
+        .page { display: none; flex-direction: column; height: 100%; padding: 10px; box-sizing: border-box; }
+        .page.active { display: flex; }
 
-        #fx-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
+        #messages, #cinema-messages { flex-grow: 1; overflow-y: auto; padding: 10px; background: white; border: 1px inset #ccc; margin-bottom: 5px; }
+        .controls { padding: 5px 0; display: flex; gap: 5px; }
 
-        .glass {
-            background: var(--aero-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            border: 1px solid var(--aero-border); box-shadow: 0 8px 32px rgba(0,0,0,0.3); color: #000;
-        }
+        /* Сапер */
+        .mines-grid { display: grid; grid-template-columns: repeat(10, 25px); gap: 1px; background: #888; border: 2px solid #000; width: fit-content; margin: 0 auto; }
+        .cell { width: 25px; height: 25px; background: #ccc; border: 2px outset #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; user-select: none; }
+        .cell.open { border: 1px solid #999; background: #ddd; }
+        .cell.mine { background: red; }
 
-        /* Header & Mobile */
-        .app-header {
-            height: 60px; display: flex; align-items: center; justify-content: space-between;
-            padding: 0 15px; z-index: 100; border-bottom: 1px solid var(--aero-border);
-        }
-        .header-user { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-        .header-user img { width: 38px; height: 38px; border-radius: 50%; border: 2px solid #fff; object-fit: cover; }
-
-        /* Main Layout */
-        .main-container {
-            flex: 1; display: flex; width: 98%; max-width: 1500px; margin: 10px auto;
-            gap: 15px; height: calc(100vh - 100px); position: relative; z-index: 10;
-        }
-
-        .sidebar { width: 300px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
-        .viewport { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-
-        .tabs-nav { display: flex; gap: 4px; padding: 5px; border-radius: 12px; margin-bottom: 10px; overflow-x: auto; }
-        .tab-btn {
-            padding: 8px 15px; border: none; border-radius: 8px; cursor: pointer;
-            background: transparent; color: #fff; font-weight: bold; font-size: 13px; white-space: nowrap;
-        }
-        .tab-btn.active { background: #fff; color: #000; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-
-        /* Chat Styles */
-        #messages-box { flex: 1; overflow-y: auto; background: rgba(255,255,255,0.85); border-radius: 12px; padding: 15px; margin-bottom: 10px; }
-        .msg-unit { margin-bottom: 15px; animation: fadeIn 0.3s; }
-        .msg-head { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 5px; cursor: pointer; }
-        .msg-head img { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #ccc; }
-        .msg-text { 
-            display: inline-block; padding: 10px 14px; border-radius: 15px; 
-            background: #fff; color: #333; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            max-width: 85%; word-wrap: break-word; position: relative;
-        }
-        .msg-text img { max-width: 100%; border-radius: 8px; margin-top: 5px; }
-
-        /* Painting Tool */
-        #paint-wrap { flex: 1; background: #eee; border-radius: 12px; overflow: scroll; position: relative; }
-        #canvas-paint { background: #fff; transform-origin: top left; }
-
-        /* Toasts */
-        .toast-area { position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; }
-        .toast { width: 280px; padding: 15px; border-radius: 15px; animation: toastIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
-
-        /* Auth */
-        #auth-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes toastIn { from { transform: translateX(120%); } to { transform: translateX(0); } }
-
-        @media (max-width: 768px) {
-            .sidebar { display: none; }
-            .main-container { margin: 0; width: 100%; height: calc(100vh - 60px); }
-        }
+        /* Рисование */
+        #paint-canvas { border: 1px solid #000; background: white; cursor: crosshair; flex-grow: 1; touch-action: none; }
+        
+        .avatar-big { width: 100%; border: 1px solid #000; margin-bottom: 10px; }
+        .snowflake { position: fixed; top: -10px; color: white; pointer-events: none; z-index: 9999; }
     </style>
 </head>
 <body>
 
-<canvas id="fx-canvas"></canvas>
-
-<div id="auth-overlay">
-    <div class="glass" style="width:320px; padding:35px; border-radius:25px; text-align:center;">
-        <h2 style="margin:0 0 25px 0; color:var(--win-blue)">FreeNet Ultimate</h2>
-        <input type="text" id="auth-login" placeholder="Логин" style="width:100%; margin-bottom:12px; padding:12px; border-radius:10px; border:none; box-sizing:border-box;">
-        <input type="password" id="auth-pass" placeholder="Пароль" style="width:100%; margin-bottom:25px; padding:12px; border-radius:10px; border:none; box-sizing:border-box;">
-        <button class="tab-btn active" style="width:100%; background:var(--win-blue); color:white; padding:12px;" onclick="handleAuth()">ВОЙТИ / СОЗДАТЬ</button>
-    </div>
-</div>
-
-<header class="app-header glass">
-    <div class="header-user" onclick="switchTab('tab-style', document.querySelector('[onclick*=\'tab-style\']'))">
-        <img id="my-ava-top" src="https://via.placeholder.com/40">
-        <span id="my-nick-top">Загрузка...</span>
-    </div>
-    <div style="display:flex; align-items:center; gap:15px;">
-        <span id="clock-widget" style="font-weight:bold; font-size:18px;">00:00</span>
-        <img src="https://cdn-icons-png.flaticon.com/512/3524/3524659.png" width="24" style="cursor:pointer; filter: invert(1);" onclick="toggleSettings()">
-    </div>
-</header>
-
-<div class="main-container">
-    <div class="sidebar">
-        <div class="glass" id="profile-card" style="padding:20px; border-radius:18px; text-align:center;">
-            <img id="side-ava" src="" style="width:100px; height:100px; border-radius:50%; border:4px solid #fff; object-fit:cover; background:#fff;">
-            <h3 id="side-nick" style="margin:12px 0 5px 0">...</h3>
-            <p id="side-desc" style="font-size:13px; color:#444; margin-bottom:15px;">Загрузка данных...</p>
-            <div id="profile-actions"></div>
-        </div>
-
-        <div class="glass" style="padding:15px; border-radius:18px; margin-top:auto;">
-            <div style="font-size:12px; margin-bottom:8px; font-weight:bold;">Aero Music</div>
-            <div style="display:flex; align-items:center; gap:10px; justify-content:center;">
-                <button class="tab-btn active" style="padding:5px 10px;" onclick="changeTrack(-1)">⏮</button>
-                <button class="tab-btn active" id="play-btn" style="padding:5px 15px;" onclick="toggleMusic()">▶</button>
-                <button class="tab-btn active" style="padding:5px 10px;" onclick="changeTrack(1)">⏭</button>
-            </div>
-            <input type="text" id="music-input" placeholder="Плейлист URL..." style="width:100%; margin-top:10px; font-size:10px; padding:5px; border-radius:5px; border:none;">
-        </div>
+<div class="window">
+    <div class="title-bar"><span>MySpace_Mega_Hub.exe</span><span>[?] [X]</span></div>
+    
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('tab-chat')">Чат</div>
+        <div class="tab" onclick="switchTab('tab-cinema')">Кино</div>
+        <div class="tab" onclick="switchTab('tab-paint')">Рисование</div>
+        <div class="tab" onclick="switchTab('tab-games')">Сапёр</div>
     </div>
 
-    <div class="viewport">
-        <div class="tabs-nav glass">
-            <button class="tab-btn active" onclick="switchTab('tab-chat', this)">Чат</button>
-            <button class="tab-btn" onclick="switchTab('tab-friends', this)">Друзья</button>
-            <button class="tab-btn" onclick="switchTab('tab-cinema', this)">Кино</button>
-            <button class="tab-btn" onclick="switchTab('tab-paint', this)">Рисование</button>
-            <button class="tab-btn" onclick="switchTab('tab-games', this)">Игры</button>
-            <button class="tab-btn" onclick="switchTab('tab-style', this)">Настройки</button>
+    <div class="main-layout">
+        <div class="sidebar">
+            <img id="view-ava" class="avatar-big" src="https://via.placeholder.com/150" alt="Ava">
+            <strong>Профиль:</strong>
+            <input type="text" id="nick" placeholder="Ник" style="width: 100%;">
+            <input type="text" id="ava" placeholder="URL аватарки" style="width: 100%; margin: 5px 0;">
+            <hr>
+            <strong>Дизайн:</strong>
+            <input type="text" id="bg-url" placeholder="URL фона" style="width: 100%;">
+            <textarea id="custom-css" placeholder="CSS код..." style="width: 100%; height: 50px; font-size: 10px;"></textarea>
+            <button onclick="applyDesign()" style="width: 100%; background: #ffcc00;">ОБНОВИТЬ</button>
+            <button onclick="toggleSnow()" style="width: 100%; margin-top: 5px;">Снег</button>
         </div>
 
-        <div id="tab-chat" class="page-content" style="display:flex; flex-direction:column; height:100%;">
-            <div id="messages-box" class="glass"></div>
-            <div id="typing-box" style="font-size:11px; color:#fff; height:15px; margin-bottom:5px; text-shadow:1px 1px 2px #000;"></div>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="chat-input" placeholder="Напишите что-нибудь..." style="flex:1; padding:14px; border-radius:12px; border:none;" oninput="broadcastTyping()">
-                <button class="tab-btn active" style="width:70px; font-size:18px;" onclick="sendMessage()">➤</button>
-            </div>
-        </div>
-
-        <div id="tab-friends" class="page-content" style="display:none; height:100%;">
-            <div class="glass" style="flex:1; padding:20px; border-radius:15px; overflow-y:auto;">
-                <h3>Ваши друзья</h3>
-                <div id="friends-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap:15px;"></div>
-            </div>
-        </div>
-
-        <div id="tab-cinema" class="page-content" style="display:none; height:100%;">
-            <div id="cinema-lobby" class="glass" style="flex:1; padding:20px; border-radius:15px;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h3>Кинотеатр</h3>
-                    <button class="tab-btn active" onclick="createRoom()">+ Создать комнату</button>
-                </div>
-                <hr style="opacity:0.2; margin:15px 0;">
-                <div id="rooms-list" style="display:flex; flex-direction:column; gap:10px;"></div>
-            </div>
-            <div id="cinema-room" style="display:none; flex:1; flex-direction:column;">
-                <div id="yt-player" style="width:100%; height:400px; background:#000; border-radius:15px;"></div>
-                <div class="glass" style="margin-top:10px; padding:10px; display:flex; gap:10px; border-radius:12px;">
-                    <input type="text" id="yt-url" placeholder="YouTube Link..." style="flex:1; padding:10px; border-radius:8px; border:none;">
-                    <button class="tab-btn active" onclick="syncVideo()">ПУСК</button>
-                    <button class="tab-btn" style="background:#ff4444" onclick="leaveRoom()">Выйти</button>
+        <div class="content">
+            <div id="tab-chat" class="page active">
+                <div id="messages"></div>
+                <div class="controls">
+                    <input type="text" id="msg-input" placeholder="Напиши что-нибудь...">
+                    <button onclick="send('messages', 'msg-input')">></button>
                 </div>
             </div>
-        </div>
 
-        <div id="tab-paint" class="page-content" style="display:none; flex-direction:column; height:100%;">
-            <div class="glass" style="padding:10px; display:flex; gap:12px; align-items:center; border-radius:12px 12px 0 0;">
-                <input type="color" id="p-color" value="#1b5ead">
-                <input type="range" id="p-size" min="1" max="50" value="5">
-                <button class="tab-btn active" onclick="setTool('pen')">Кисть</button>
-                <button class="tab-btn active" onclick="setTool('eraser')">Ластик</button>
-                <button class="tab-btn active" onclick="changeZoom(0.2)">+</button>
-                <button class="tab-btn active" onclick="changeZoom(-0.2)">-</button>
-                <button class="tab-btn" style="background:#999" onclick="clearCanvas()">Очистить</button>
+            <div id="tab-cinema" class="page">
+                <div class="controls">
+                    <input type="text" id="video-url" placeholder="Ссылка на YouTube (v=...)">
+                    <button onclick="loadVideo()">Смотреть</button>
+                </div>
+                <div id="video-container"></div>
+                <div id="cinema-messages"></div>
+                <div class="controls">
+                    <input type="text" id="cinema-msg-input" placeholder="Обсудить видео...">
+                    <button onclick="send('cinema-messages', 'cinema-msg-input')">></button>
+                </div>
             </div>
-            <div id="paint-wrap" class="glass">
-                <canvas id="canvas-paint"></canvas>
-            </div>
-        </div>
 
-        <div id="tab-games" class="page-content" style="display:none; height:100%;">
-            <div class="glass" style="flex:1; padding:15px; display:flex; flex-direction:column;">
-                <select id="game-select" class="glass" style="padding:10px; border-radius:10px; color:#fff; background:rgba(0,0,0,0.5);">
-                    <option value="https://data.mofunzone.com/games/swf/strikeforceheroes.swf">Strike Force Heroes</option>
-                    <option value="https://data.mofunzone.com/games/swf/ageofwar.swf">Age of War</option>
-                    <option value="https://data.mofunzone.com/games/swf/papas-pizzeria.swf">Papa's Pizzeria</option>
-                    <option value="https://data.mofunzone.com/games/swf/strikeforceheroes2.swf">Strike Force Heroes 2</option>
-                </select>
-                <button class="tab-btn active" style="margin-top:10px;" onclick="loadFlash()">ИГРАТЬ</button>
-                <div id="flash-area" style="flex:1; background:#000; margin-top:10px; border-radius:15px; overflow:hidden;"></div>
+            <div id="tab-paint" class="page">
+                <div class="controls">
+                    Цвет: <input type="color" id="paint-color" value="#000000">
+                    Толщина: <input type="range" id="paint-size" min="1" max="20" value="5">
+                    <button onclick="clearCanvas()">Очистить</button>
+                </div>
+                <canvas id="paint-canvas"></canvas>
             </div>
-        </div>
 
-        <div id="tab-style" class="page-content" style="display:none; height:100%;">
-            <div class="glass" style="flex:1; padding:20px; border-radius:15px; overflow-y:auto;">
-                <h3>Настройки профиля</h3>
-                URL Аватарки: <input type="text" id="upd-ava" style="width:100%; margin-bottom:10px;" onchange="saveProfile('ava', this.value)">
-                URL Фона сайта: <input type="text" id="upd-bg" style="width:100%; margin-bottom:10px;" onchange="saveProfile('bg', this.value)">
-                О себе: <textarea id="upd-desc" style="width:100%; height:60px; margin-bottom:10px;" onchange="saveProfile('desc', this.value)"></textarea>
-                CSS Код: <textarea id="upd-css" style="width:100%; height:150px; font-family:monospace;" onchange="saveProfile('css', this.value)"></textarea>
+            <div id="tab-games" class="page">
+                <h3 style="margin:0 0 10px 0; font-size:14px;">Minesweeper.exe</h3>
+                <div id="mines-grid" class="mines-grid"></div>
+                <p id="game-status" style="font-size:12px;"></p>
+                <button onclick="initMines()">Новая игра</button>
             </div>
         </div>
     </div>
 </div>
 
-<div id="settings-win" class="glass" style="position:fixed; top:70px; right:20px; width:260px; padding:20px; display:none; border-radius:20px; z-index:1000;">
-    <h4 style="margin:0 0 15px 0">Персонализация</h4>
-    Тема: 
-    <select id="theme-sel" onchange="applyTheme(this.value)" style="width:100%; margin-bottom:10px;">
-        <option value="aero">Windows Aero (Blue)</option>
-        <option value="xp">Luna (XP Green)</option>
-        <option value="dark">Dark Glass (Black)</option>
-        <option value="gold">Luxury Gold</option>
-        <option value="cyber">Cyberpunk Pink</option>
-    </select>
-    Эффект:
-    <select id="fx-sel" onchange="applyFX(this.value)" style="width:100%; margin-bottom:15px;">
-        <option value="none">Нет</option>
-        <option value="snow">Снег</option>
-        <option value="rain">Дождь</option>
-        <option value="stars">Звезды</option>
-    </select>
-    Шрифт:
-    <select id="font-sel" onchange="applyFont(this.value)" style="width:100%;">
-        <option value="'Segoe UI'">Segoe UI</option>
-        <option value="'Courier New'">Monospace</option>
-        <option value="'Tahoma'">Tahoma</option>
-        <option value="'Arial'">Arial</option>
-    </select>
-</div>
-
-<div class="toast-area" id="toast-root"></div>
-<audio id="audio-player" loop></audio>
-
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, orderBy, limit, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getDatabase, ref, set, onValue, onDisconnect, serverTimestamp, update, push, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyBDrzNL3_kaSCU38Oac9-7CarZgqRfc9pU",
-        authDomain: "freenet-3ad3c.firebaseapp.com",
-        projectId: "freenet-3ad3c",
-        databaseURL: "https://freenet-3ad3c-default-rtdb.europe-west1.firebasedatabase.app/"
-    };
-
-    const fb = initializeApp(firebaseConfig);
-    const db = getFirestore(fb);
-    const rtdb = getDatabase(fb);
-
-    let me = null;
-    let viewingUser = null;
-
-    // --- AUTH ---
-    window.handleAuth = async () => {
-        const login = document.getElementById('auth-login').value.trim().toLowerCase();
-        const pass = document.getElementById('auth-pass').value.trim();
-        if(!login || !pass) return;
-
-        const snap = await getDoc(doc(db, "users", login));
-        if(snap.exists()){
-            if(snap.data().pass === pass) finalizeLogin(login, snap.data());
-            else alert("Неверный пароль!");
-        } else {
-            const data = { pass, nick: login, ava: '', bg: '', css: '', desc: '', friends: [], theme: 'aero', fx: 'none', font: "'Segoe UI'" };
-            await setDoc(doc(db, "users", login), data);
-            finalizeLogin(login, data);
-        }
-    };
-
-    function finalizeLogin(nick, data) {
-        me = { ...data };
-        localStorage.setItem('fn_user', nick);
-        localStorage.setItem('fn_pass', data.pass);
-        document.getElementById('auth-overlay').style.display = 'none';
-        
-        set(ref(rtdb, 'online/' + nick), true);
-        onDisconnect(ref(rtdb, 'online/' + nick)).remove();
-        
-        initApp();
-        loadProfile(nick);
+<script>
+    // ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
+    function switchTab(tabId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+        if(tabId === 'tab-paint') resizeCanvas();
     }
 
-    // --- CORE APP ---
-    function initApp() {
-        // Clock
-        setInterval(() => {
-            const d = new Date();
-            document.getElementById('clock-widget').innerText = d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0');
-        }, 1000);
+    // ЧАТ ЛОГИКА
+    function send(containerId, inputId) {
+        const input = document.getElementById(inputId);
+        const nick = document.getElementById('nick').value || 'Аноним';
+        const ava = document.getElementById('ava').value || 'https://via.placeholder.com/20';
+        if(!input.value) return;
 
-        // Global Chat
-        const q = query(collection(db, "messages"), orderBy("time", "asc"), limit(50));
-        onSnapshot(q, snap => {
-            const box = document.getElementById('messages-box');
-            box.innerHTML = '';
-            snap.forEach(d => {
-                const m = d.data();
-                const div = document.createElement('div');
-                div.className = 'msg-unit';
-                div.innerHTML = `
-                    <div class="msg-head" onclick="loadProfile('${m.nick}')">
-                        <img src="${m.ava || 'https://via.placeholder.com/30'}">
-                        <b>${m.nick}</b>
-                    </div>
-                    <div class="msg-text" onclick="handleMsgClick('${d.id}', '${m.nick}')">${m.text}</div>
-                `;
-                box.appendChild(div);
-            });
-            box.scrollTop = box.scrollHeight;
-        });
-
-        // Friend Requests Listener
-        onValue(ref(rtdb, `requests/${me.nick}`), snap => {
-            if(!snap.exists()) return;
-            snap.forEach(req => {
-                const from = req.val().from;
-                showToast(`Запрос в друзья от <b>${from}</b> <br><br> <button class="tab-btn active" onclick="acceptFriend('${from}', '${req.key}')">Принять</button>`, 10000);
-            });
-        });
-
-        // Painting Init
-        initPaint();
+        const html = `<div style="margin-bottom:8px;"><img src="${ava}" style="width:20px; height:20px; vertical-align:middle; border-radius:3px;"> <b>${nick}:</b> ${input.value}</div>`;
+        const container = document.getElementById(containerId);
+        container.innerHTML += html;
+        input.value = '';
+        container.scrollTop = container.scrollHeight;
     }
 
-    // --- PROFILES & FRIENDS ---
-    window.loadProfile = async (nick) => {
-        const snap = await getDoc(doc(db, "users", nick));
-        if(!snap.exists()) return;
-        const d = snap.data();
+    // КИНО ЛОГИКА
+    function loadVideo() {
+        const url = document.getElementById('video-url').value;
+        let id = "";
+        if(url.includes('v=')) id = url.split('v=')[1].split('&')[0];
+        else if(url.includes('be/')) id = url.split('be/')[1];
         
-        // Apply styling of the profile owner
-        document.body.style.backgroundImage = d.bg ? `url(${d.bg})` : "url('https://wallpaperaccess.com/full/1155027.jpg')";
-        document.getElementById('custom-css-style').innerText = d.css || "";
-        
-        // Sidebar update
-        document.getElementById('side-ava').src = d.ava || 'https://via.placeholder.com/100';
-        document.getElementById('side-nick').innerText = d.nick;
-        document.getElementById('side-desc').innerText = d.desc || "Нет описания";
-
-        const act = document.getElementById('profile-actions');
-        act.innerHTML = '';
-        if(nick !== me.nick) {
-            if(!me.friends.includes(nick)) {
-                act.innerHTML = `<button class="tab-btn active" style="width:100%" onclick="sendFriendRequest('${nick}')">Добавить в друзья</button>`;
-            } else {
-                act.innerHTML = `<button class="tab-btn active" style="width:100%" onclick="openPrivateChat('${nick}')">Написать сообщение</button>`;
-            }
+        if(id) {
+            document.getElementById('video-container').innerHTML = `<iframe width="100%" height="200" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe>`;
         } else {
-            // My profile
-            document.getElementById('my-ava-top').src = d.ava || 'https://via.placeholder.com/40';
-            document.getElementById('my-nick-top').innerText = d.nick;
-            document.getElementById('upd-ava').value = d.ava;
-            document.getElementById('upd-bg').value = d.bg;
-            document.getElementById('upd-desc').value = d.desc;
-            document.getElementById('upd-css').value = d.css;
+            alert("Вставьте корректную ссылку на YouTube");
         }
-    };
+    }
 
-    window.sendFriendRequest = (to) => {
-        push(ref(rtdb, `requests/${to}`), { from: me.nick });
-        showToast("Запрос отправлен!");
-    };
-
-    window.acceptFriend = async (who, reqKey) => {
-        me.friends.push(who);
-        await updateDoc(doc(db, "users", me.nick), { friends: me.friends });
-        const otherSnap = await getDoc(doc(db, "users", who));
-        const otherFriends = otherSnap.data().friends || [];
-        otherFriends.push(me.nick);
-        await updateDoc(doc(db, "users", who), { friends: otherFriends });
-        remove(ref(rtdb, `requests/${me.nick}/${reqKey}`));
-        showToast(`Вы теперь друзья с ${who}!`);
-        loadProfile(me.nick);
-    };
-
-    // --- MESSAGING ---
-    window.sendMessage = async () => {
-        const inp = document.getElementById('chat-input');
-        if(!inp.value.trim()) return;
-        await addDoc(collection(db, "messages"), {
-            nick: me.nick, ava: me.ava, text: inp.value, time: Date.now()
-        });
-        inp.value = '';
-    };
-
-    window.handleMsgClick = async (id, owner) => {
-        const choice = confirm(owner === me.nick ? "Удалить сообщение для всех?" : "Скрыть для себя?");
-        if(choice) {
-            if(owner === me.nick) await deleteDoc(doc(db, "messages", id));
-            else document.getElementById(id).style.display = 'none';
-        }
-    };
-
-    // --- PAINTING ---
-    const canvas = document.getElementById('canvas-paint');
+    // РИСОВАНИЕ
+    const canvas = document.getElementById('paint-canvas');
     const ctx = canvas.getContext('2d');
-    let isDrawing = false, zoom = 1, currentTool = 'pen';
-    canvas.width = 2000; canvas.height = 1500;
+    let drawing = false;
 
-    function initPaint() {
-        canvas.addEventListener('mousedown', (e) => { isDrawing = true; ctx.beginPath(); });
-        canvas.addEventListener('mousemove', (e) => {
-            if(!isDrawing) return;
-            const rect = canvas.getBoundingClientRect();
-            const x = (e.clientX - rect.left) / zoom;
-            const y = (e.clientY - rect.top) / zoom;
-            ctx.lineWidth = document.getElementById('p-size').value;
-            ctx.strokeStyle = currentTool === 'pen' ? document.getElementById('p-color').value : '#ffffff';
-            ctx.lineCap = 'round';
-            ctx.lineTo(x, y);
-            ctx.stroke();
-        });
-        window.addEventListener('mouseup', () => isDrawing = false);
+    function resizeCanvas() {
+        canvas.width = canvas.parentElement.clientWidth - 20;
+        canvas.height = 300;
     }
-    window.changeZoom = (v) => { zoom += v; canvas.style.transform = `scale(${zoom})`; };
-    window.setTool = (t) => currentTool = t;
-    window.clearCanvas = () => ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // --- GAMES (FLASH) ---
-    window.loadFlash = () => {
-        const url = document.getElementById('game-select').value;
-        const area = document.getElementById('flash-area');
-        area.innerHTML = '';
-        const ruffle = window.RufflePlayer.newest();
-        const player = ruffle.createPlayer();
-        area.appendChild(player);
-        player.load(url);
+    canvas.onmousedown = () => drawing = true;
+    canvas.onmouseup = () => { drawing = false; ctx.beginPath(); };
+    canvas.onmousemove = (e) => {
+        if(!drawing) return;
+        ctx.lineWidth = document.getElementById('paint-size').value;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = document.getElementById('paint-color').value;
+        
+        const rect = canvas.getBoundingClientRect();
+        ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+        ctx.stroke();
     };
+    function clearCanvas() { ctx.clearRect(0,0,canvas.width,canvas.height); }
 
-    // --- UTILS & SETTINGS ---
-    window.switchTab = (id, btn) => {
-        document.querySelectorAll('.page-content').forEach(p => p.style.display = 'none');
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(id).style.display = 'flex';
-        btn.classList.add('active');
-        if(id === 'tab-chat') loadProfile(me.nick);
-    };
+    // ДИЗАЙН (ИЗ ТВОЕГО КОДА)
+    function applyDesign() {
+        const bg = document.getElementById('bg-url').value;
+        if(bg) document.body.style.backgroundImage = `url('${bg}')`;
+        document.getElementById('view-ava').src = document.getElementById('ava').value || 'https://via.placeholder.com/150';
+        document.getElementById('user-styles').innerHTML = document.getElementById('custom-css').value;
+    }
 
-    window.toggleSettings = () => {
-        const s = document.getElementById('settings-win');
-        s.style.display = s.style.display === 'none' ? 'block' : 'none';
-    };
-
-    window.saveProfile = async (field, val) => {
-        me[field] = val;
-        await updateDoc(doc(db, "users", me.nick), { [field]: val });
-        loadProfile(me.nick);
-    };
-
-    window.showToast = (txt, time = 4000) => {
-        const t = document.createElement('div');
-        t.className = 'glass toast';
-        t.innerHTML = txt;
-        document.getElementById('toast-root').appendChild(t);
-        setTimeout(() => t.remove(), time);
-    };
-
-    // FX Effects
-    const fxc = document.getElementById('fx-canvas');
-    const fxctx = fxc.getContext('2d');
-    let particles = [];
-    window.applyFX = (type) => {
-        particles = [];
-        if(type === 'none') { fxctx.clearRect(0,0,fxc.width,fxc.height); return; }
-        fxc.width = window.innerWidth; fxc.height = window.innerHeight;
-        for(let i=0; i<80; i++) particles.push({x:Math.random()*fxc.width, y:Math.random()*fxc.height, s:Math.random()*3+1, r:Math.random()*2});
-        function draw(){
-            fxctx.clearRect(0,0,fxc.width,fxc.height);
-            fxctx.fillStyle = "#fff";
-            particles.forEach(p => {
-                fxctx.beginPath(); fxctx.arc(p.x, p.y, p.r, 0, Math.PI*2); fxctx.fill();
-                p.y += p.s; if(p.y > fxc.height) p.y = -5;
-            });
-            requestAnimationFrame(draw);
-        }
-        draw();
-    };
-
-    window.applyTheme = (t) => {
-        const root = document.documentElement;
-        if(t === 'dark') root.style.setProperty('--aero-bg', 'rgba(0,0,0,0.6)'), root.style.setProperty('--win-blue', '#444');
-        if(t === 'gold') root.style.setProperty('--aero-bg', 'rgba(255,215,0,0.2)'), root.style.setProperty('--win-blue', '#d4af37');
-        if(t === 'xp') root.style.setProperty('--aero-bg', 'rgba(0,128,0,0.2)'), root.style.setProperty('--win-blue', '#228b22');
-        if(t === 'aero') root.style.setProperty('--aero-bg', 'rgba(255,255,255,0.4)'), root.style.setProperty('--win-blue', '#1b5ead');
-    };
+    function toggleSnow() {
+        if(window.snowInterval) { clearInterval(window.snowInterval); window.snowInterval = null; return; }
+        window.snowInterval = setInterval(() => {
+            const s = document.createElement('div');
+            s.className = 'snowflake'; s.innerHTML = '❄';
+            s.style.left = Math.random() * window.innerWidth + 'px';
+            document.body.appendChild(s);
+            let p = -10;
+            const f = setInterval(() => { p += 2; s.style.top = p + 'px'; if(p > window.innerHeight) { clearInterval(f); s.remove(); } }, 20);
+        }, 200);
+    }
 </script>
 </body>
 </html>
